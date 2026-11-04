@@ -1,0 +1,1 @@
+Earth color texture: `earth-blue-marble.jpg`, the NASA Blue Marble land/ocean/ice/cloud map distributed in the Three.js examples texture collection. Source imagery: https://eoimages.gsfc.nasa.gov/images/imagerecords/57000/57735/land_ocean_ice_cloud_2048.jpg . NASA imagery is public domain. The texture is used for illustration, not measurement.
