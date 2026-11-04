@@ -32,9 +32,56 @@ function cloudMap() {
   for (let i = 0; i < 280; i++) { const x = random()*1024, y = random()*512, w = 18+random()*80, h = 3+random()*10; c.fillStyle = 'rgba(235,244,255,' + (.025+random()*.08) + ')'; c.beginPath(); c.ellipse(x,y,w,h,0,0,Math.PI*2); c.fill(); }
   const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 4; return texture;
 }
+function terrainNoise(x: number, z: number, scale: number) {
+  const ix = Math.floor(x * scale), iz = Math.floor(z * scale);
+  const fx0 = x * scale - ix, fz0 = z * scale - iz;
+  const fx = fx0 * fx0 * (3 - 2 * fx0), fz = fz0 * fz0 * (3 - 2 * fz0);
+  const hash = (a: number, b: number) => {
+    const value = Math.sin(a * 127.1 + b * 311.7 + scale * 74.7) * 43758.5453;
+    return value - Math.floor(value);
+  };
+  const north = THREE.MathUtils.lerp(hash(ix, iz), hash(ix + 1, iz), fx);
+  const south = THREE.MathUtils.lerp(hash(ix, iz + 1), hash(ix + 1, iz + 1), fx);
+  return THREE.MathUtils.lerp(north, south, fz);
+}
+function terrainTexture() {
+  const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024;
+  const context = canvas.getContext('2d')!;
+  const pixels = context.createImageData(canvas.width, canvas.height);
+  for (let py = 0; py < canvas.height; py++) {
+    const z = (py / (canvas.height - 1) - .5) * 24;
+    for (let px = 0; px < canvas.width; px++) {
+      const x = (px / (canvas.width - 1) - .5) * 24;
+      const broad = terrainNoise(x, z, .42);
+      const medium = terrainNoise(x + 19, z - 7, 1.8);
+      const small = terrainNoise(x - 4, z + 29, 8);
+      const detail = terrainNoise(x + 61, z + 11, 38);
+      const moisture = terrainNoise(x - 43, z + 17, .8);
+      const elevation = broad * .52 + medium * .3 + small * .18;
+      const dryness = .45 * broad + .35 * moisture + .2 * medium;
+      const forest = THREE.MathUtils.smoothstep(dryness, .36, .72);
+      const rock = THREE.MathUtils.smoothstep(elevation, .68, .9) * .48;
+      const grass = [92 + medium * 32, 91 + moisture * 43, 48 + broad * 24];
+      const woodland = [47 + small * 28, 65 + moisture * 34, 37 + broad * 22];
+      const stone = [116 + detail * 34, 105 + detail * 32, 83 + detail * 29];
+      const grain = (detail - .5) * 18;
+      const offset = (py * canvas.width + px) * 4;
+      for (let channel = 0; channel < 3; channel++) {
+        const greenValue = THREE.MathUtils.lerp(grass[channel], woodland[channel], forest);
+        pixels.data[offset + channel] = Math.round(THREE.MathUtils.lerp(greenValue + grain, stone[channel] + grain, rock));
+      }
+      pixels.data[offset + 3] = 255;
+    }
+  }
+  context.putImageData(pixels, 0, 0);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  return texture;
+}
 function earthTerrain() {
-  const size = 12, segments = 256;
-  const positions: number[] = [], colors: number[] = [], indices: number[] = [];
+  const size = 12, segments = 384;
+  const positions: number[] = [], colors: number[] = [], uvs: number[] = [], indices: number[] = [];
   const color = new THREE.Color();
   for (let row = 0; row <= segments; row++) {
     const z = (row / segments * 2 - 1) * size;
@@ -42,13 +89,14 @@ function earthTerrain() {
       const x = (col / segments * 2 - 1) * size;
       const radius = Math.sqrt(x * x + z * z);
       const fade = Math.max(0, 1 - radius / size);
-      const terrainNoise = Math.sin(x * 5.2 + z * 1.7) * .5 + Math.sin(z * 4.8 - x * 2.1) * .3 + Math.sin(x * 1.2) * .2;
-      const terrain = terrainNoise * .025 * fade * Math.min(1, radius / .5);
+      const terrainNoise = Math.sin(x * .8 + z * .17) * .44 + Math.sin(z * 1.3 - x * .31) * .34 + Math.sin(x * 3.1 + z * 2.7) * .22;
+      const terrain = terrainNoise * .045 * fade * Math.min(1, radius / .5);
       const surface = Math.sqrt(Math.max(0, EARTH_RADIUS_KM ** 2 - radius ** 2));
       positions.push(x, surface + .001 + terrain, z);
-      const green = .31 + terrainNoise * .065;
-      color.setRGB(green * .78, green, green * .68);
+      const shade = .82 + terrainNoise * .12;
+      color.setRGB(shade, shade, shade);
       colors.push(color.r, color.g, color.b);
+      uvs.push(col / segments, row / segments);
       if (row < segments && col < segments) {
         const a = row * (segments + 1) + col, b = a + segments + 1;
         indices.push(a, b, a + 1, b, b + 1, a + 1);
@@ -58,8 +106,11 @@ function earthTerrain() {
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
   geometry.setIndex(indices); geometry.computeVertexNormals();
-  return new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }));
+  return new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
+    map: terrainTexture(), vertexColors: true, roughness: .96, side: THREE.DoubleSide
+  }));
 }
 function body(radius: number, color: number) {
   return new THREE.Mesh(new THREE.SphereGeometry(radius, 32, 24), new THREE.MeshStandardMaterial({ color, roughness: .9 }));
@@ -88,11 +139,13 @@ export const planetaryRenderer: SceneRenderer = {
         side: THREE.BackSide, transparent: true, depthWrite: false,
         vertexShader: [
           'varying vec3 vWorldPosition;',
-          'void main() { vec4 world = modelMatrix * vec4(position, 1.0); vWorldPosition = world.xyz; gl_Position = projectionMatrix * viewMatrix * world; }'
+          'varying vec3 vPlanetCenter;',
+          'void main() { vec4 world = modelMatrix * vec4(position, 1.0); vWorldPosition = world.xyz; vPlanetCenter = (modelMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz; gl_Position = projectionMatrix * viewMatrix * world; }'
         ].join('\n'),
         fragmentShader: [
           'varying vec3 vWorldPosition;',
-          'void main() { vec3 ray = normalize(vWorldPosition - cameraPosition); vec3 normal = normalize(vWorldPosition); float elevation = max(0.0, dot(ray, normal)); vec3 horizon = vec3(0.20, 0.49, 0.78); vec3 zenith = vec3(0.015, 0.035, 0.10); vec3 sky = mix(horizon, zenith, smoothstep(0.0, 0.9, elevation)); gl_FragColor = vec4(sky, 0.58); }'
+          'varying vec3 vPlanetCenter;',
+          'void main() { vec3 ray = normalize(vWorldPosition - cameraPosition); vec3 normal = normalize(vWorldPosition - vPlanetCenter); float elevation = max(0.0, dot(ray, normal)); vec3 horizon = vec3(0.20, 0.49, 0.78); vec3 zenith = vec3(0.015, 0.035, 0.10); vec3 sky = mix(horizon, zenith, smoothstep(0.0, 0.85, elevation)); gl_FragColor = vec4(sky, 0.76); }'
         ].join('\n')
       })));
       const light = new THREE.DirectionalLight(0xffe1b2, 2.5); light.position.set(-12000, 18000, 24000); group.add(light);
