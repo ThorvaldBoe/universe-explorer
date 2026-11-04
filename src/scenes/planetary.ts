@@ -33,7 +33,7 @@ function cloudMap() {
   const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 4; return texture;
 }
 function earthTerrain() {
-  const size = 20, segments = 128;
+  const size = 12, segments = 256;
   const positions: number[] = [], colors: number[] = [], indices: number[] = [];
   const color = new THREE.Color();
   for (let row = 0; row <= segments; row++) {
@@ -58,7 +58,7 @@ function earthTerrain() {
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
   geometry.setIndex(indices); geometry.computeVertexNormals();
-  return new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide }));
+  return new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }));
 }
 function body(radius: number, color: number) {
   return new THREE.Mesh(new THREE.SphereGeometry(radius, 32, 24), new THREE.MeshStandardMaterial({ color, roughness: .9 }));
@@ -105,11 +105,11 @@ export const planetaryRenderer: SceneRenderer = {
         new THREE.RingGeometry(distance * .9997, distance * 1.0003, 192),
         new THREE.MeshBasicMaterial({ color: 0x8396b6, transparent: true, opacity: .26, side: THREE.DoubleSide, depthWrite: false })
       );
-      orbit.position.copy(sunPosition); orbit.rotation.x = Math.PI / 2; group.add(orbit);
+      orbit.position.copy(sunPosition); group.add(orbit);
       const position = new THREE.Vector3(
         sunPosition.x + Math.cos(angles[i]) * distance,
-        0,
-        Math.sin(angles[i]) * distance
+        Math.sin(angles[i]) * distance,
+        0
       );
       if (i !== 2) {
         const planet = body(radiiKm[i], planetColors[i]);
