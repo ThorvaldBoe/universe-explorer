@@ -36,12 +36,12 @@ try {
       if (message.type() === 'error') browserErrors.push({ viewport: viewport.name, type: 'console', message: message.text() });
     });
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
-    await page.screenshot({ path: `${artifactDir}/${viewport.name}-01-earth.png`, fullPage: true });
+    await page.screenshot({ path: `${artifactDir}/${viewport.name}-01-earth.png`, fullPage: true, timeout: 90000 });
     for (let i = 1; i < stops.length; i++) {
       await page.getByRole('button', { name: `Go to ${stops[i]}` }).click();
       await page.getByRole('heading', { name: stops[i] }).waitFor();
       await delay(350);
-      await page.screenshot({ path: `${artifactDir}/${viewport.name}-0${i + 1}-${stops[i].toLowerCase().replaceAll(' ', '-')}.png`, fullPage: true });
+      await page.screenshot({ path: `${artifactDir}/${viewport.name}-0${i + 1}-${stops[i].toLowerCase().replaceAll(' ', '-')}.png`, fullPage: true, timeout: 90000 });
     }
     const webgl = await page.locator('#fallback').isHidden();
     await writeFile(`${artifactDir}/${viewport.name}-report.json`, JSON.stringify({
