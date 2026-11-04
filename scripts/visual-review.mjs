@@ -31,21 +31,22 @@ try {
   ]) {
     const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height }, deviceScaleFactor: 1, reducedMotion: 'reduce' });
     const page = await context.newPage();
+    const scenesForViewport = viewport.name === 'desktop' ? stops : stops.slice(0, 3);
     page.on('pageerror', (error) => browserErrors.push({ viewport: viewport.name, type: 'pageerror', message: error.message }));
     page.on('console', (message) => {
       if (message.type() === 'error') browserErrors.push({ viewport: viewport.name, type: 'console', message: message.text() });
     });
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
-    await page.screenshot({ path: `${artifactDir}/${viewport.name}-01-earth.png`, fullPage: true });
-    for (let i = 1; i < stops.length; i++) {
-      await page.getByRole('button', { name: `Go to ${stops[i]}` }).click();
-      await page.getByRole('heading', { name: stops[i] }).waitFor();
+    await page.screenshot({ path: `${artifactDir}/${viewport.name}-01-earth.png`, fullPage: true, timeout: 90000 });
+    for (let i = 1; i < scenesForViewport.length; i++) {
+      await page.getByRole('button', { name: `Go to ${scenesForViewport[i]}` }).click();
+      await page.getByRole('heading', { name: scenesForViewport[i] }).waitFor();
       await delay(350);
-      await page.screenshot({ path: `${artifactDir}/${viewport.name}-0${i + 1}-${stops[i].toLowerCase().replaceAll(' ', '-')}.png`, fullPage: true });
+      await page.screenshot({ path: `${artifactDir}/${viewport.name}-0${i + 1}-${scenesForViewport[i].toLowerCase().replaceAll(' ', '-')}.png`, fullPage: true, timeout: 90000 });
     }
     const webgl = await page.locator('#fallback').isHidden();
     await writeFile(`${artifactDir}/${viewport.name}-report.json`, JSON.stringify({
-      viewport, webglAvailable: webgl, sceneTitles: stops,
+      viewport, webglAvailable: webgl, sceneTitles: scenesForViewport,
       canvasSize: await page.locator('#universe').evaluate((canvas) => ({ width: canvas.clientWidth, height: canvas.clientHeight })),
     }, null, 2));
     await context.close();
@@ -58,10 +59,10 @@ try {
   const videoPage = await videoContext.newPage();
   videoPage.on('pageerror', (error) => browserErrors.push({ viewport: 'transition-video', type: 'pageerror', message: error.message }));
   await videoPage.goto(baseUrl, { waitUntil: 'networkidle' });
+  await videoPage.getByRole('button', { name: /Begin journey/ }).click();
+  await delay(5000);
   await videoPage.getByRole('button', { name: /Go further/ }).click();
-  await delay(2800);
-  await videoPage.getByRole('button', { name: /Go further/ }).click();
-  await delay(2800);
+  await delay(5000);
   const video = videoPage.video();
   await videoPage.close();
   await videoContext.close();

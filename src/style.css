@@ -18,10 +18,10 @@ button { font: inherit; color: inherit; }
 .stage { flex: 1; min-height: 500px; display: grid; place-items: center; }
 .scene-wrap { width: 100%; height: min(70svh, 720px); min-height: 480px; position: relative; overflow: hidden; }
 #universe { position: absolute; inset: 0; width: 100%; height: 100%; }
-.scene-meta { position: absolute; z-index: 1; left: 2%; top: 50%; transform: translateY(-50%); max-width: 420px; pointer-events: none; text-shadow: 0 2px 28px #050914; }
+.scene-meta { position: absolute; z-index: 1; left: 0; top: 4%; transform: none; width: min(34%, 390px); padding: 1rem 1.15rem; pointer-events: none; text-shadow: 0 2px 28px #050914; background: linear-gradient(90deg, #050914df 0%, #050914a8 78%, #05091400 100%); border-radius: 12px; }
 .eyebrow { color: #a9c5f3; font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; }
-h1 { margin: 1rem 0 .7rem; font-size: clamp(3.1rem, 8vw, 6rem); line-height: .95; font-weight: 480; letter-spacing: -.065em; }
-.scene-meta p { max-width: 360px; color: #b2bfd5; font-size: 1rem; line-height: 1.7; }
+h1 { margin: 1rem 0 .7rem; font-size: clamp(2.6rem, 5.2vw, 4.5rem); line-height: .95; font-weight: 480; letter-spacing: -.065em; }
+.scene-meta p { max-width: 360px; color: #b2bfd5; font-size: .92rem; line-height: 1.55; }
 .scale-chip { position: absolute; right: 1rem; top: 1.4rem; display: flex; gap: .65rem; align-items: center; color: #c7d2e8; background: #0b1223bc; border: 1px solid #ffffff17; border-radius: 100px; padding: .65rem .95rem; font-size: .75rem; backdrop-filter: blur(10px); }
 .pulse { width: 6px; height: 6px; border-radius: 50%; background: #8bd8ca; box-shadow: 0 0 12px #8bd8ca; }
 .fallback { position: absolute; z-index: 3; inset: auto 1rem 1rem; padding: 1rem; background: #151e30; border-radius: 10px; }
@@ -38,9 +38,9 @@ h1 { margin: 1rem 0 .7rem; font-size: clamp(3.1rem, 8vw, 6rem); line-height: .95
 @media (max-width: 650px) {
   .topbar { height: 68px; }.topbar-note { display: none; }
   .stage { min-height: 0; }.scene-wrap { min-height: 530px; height: 66svh; }
-  .scene-meta { left: 0; top: auto; bottom: 11%; transform: none; max-width: 300px; }
-  h1 { font-size: clamp(3.1rem, 16vw, 5rem); }
-  .scene-meta p { font-size: .9rem; }.scale-chip { top: .7rem; right: 0; font-size: .68rem; }
+  .scene-meta { left: 0; top: 7%; bottom: auto; transform: none; width: min(88%, 330px); padding: .85rem 1rem; background: linear-gradient(110deg, #050914ed 0%, #050914bd 84%, #0509142b 100%); }
+  h1 { font-size: clamp(2.8rem, 13vw, 4.2rem); }
+  .scene-meta p { max-width: 290px; margin-bottom: .3rem; font-size: .88rem; line-height: 1.5; }.scale-chip { top: .7rem; right: 0; font-size: .68rem; }
   .controls { min-height: 78px; }.controls button { padding: 0 1rem; min-height: 46px; }.controls button span { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }

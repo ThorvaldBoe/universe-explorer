@@ -28,6 +28,7 @@ export const cosmicRenderer: SceneRenderer = {
     group.add(new THREE.LineSegments(lines, new THREE.LineBasicMaterial({ color: 0x547fbc, transparent: true, opacity: .34, depthWrite: false })));
     const points = new THREE.BufferGeometry(); points.setAttribute('position', new THREE.Float32BufferAttribute(nodePositions, 3));
     group.add(new THREE.Points(points, new THREE.PointsMaterial({ color: 0xd9e8ff, size: .055, transparent: true, opacity: .85, depthWrite: false })));
+    group.scale.setScalar(2.1e21);
     return group;
   },
   update(group, elapsed) { group.rotation.y = elapsed * .025; group.rotation.x = Math.sin(elapsed * .06) * .02; },
