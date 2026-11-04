@@ -75,6 +75,7 @@ export const planetaryRenderer: SceneRenderer = {
       }));
       group.add(earth);
       group.add(earthTerrain());
+      group.userData.stopId = 'earth';
       const clouds = new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS_KM + 22, 96, 64), new THREE.MeshStandardMaterial({
         map: cloudMap(), transparent: true, opacity: .5, roughness: 1, depthWrite: false
       }));
@@ -107,8 +108,10 @@ export const planetaryRenderer: SceneRenderer = {
         0,
         Math.sin(angles[i]) * distance
       );
-      const planet = body(radiiKm[i], planetColors[i]);
-      planet.position.copy(position); group.add(planet);
+      if (i !== 2) {
+        const planet = body(radiiKm[i], planetColors[i]);
+        planet.position.copy(position); group.add(planet);
+      }
       markerPositions.push(position.x, position.y, position.z);
       markerColor.setHex(planetColors[i]); markerColors.push(markerColor.r, markerColor.g, markerColor.b);
     }
@@ -119,7 +122,9 @@ export const planetaryRenderer: SceneRenderer = {
     return group;
   },
   update(group, elapsed) {
-    const earth = group.children.find((child) => child instanceof THREE.Mesh && child.geometry instanceof THREE.SphereGeometry) as THREE.Mesh | undefined;
-    if (earth) earth.rotation.y = elapsed * .015;
+    if (group.userData.stopId === 'earth') {
+      const earth = group.children.find((child) => child instanceof THREE.Mesh && child.geometry instanceof THREE.SphereGeometry) as THREE.Mesh | undefined;
+      if (earth) earth.rotation.y = elapsed * .015;
+    }
   },
 };
