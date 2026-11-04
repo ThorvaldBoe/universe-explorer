@@ -127,7 +127,18 @@ function updateJourney(now: number) {
   const endDirection = journey.returnArc ? new THREE.Vector3(0, 1, 0) : journey.toPosition.clone().sub(journey.toTarget).normalize();
   const direction = startDirection.lerp(endDirection, eased).normalize();
   camera.position.copy(target).addScaledVector(direction, distance);
-  camera.quaternion.copy(journey.fromQuaternion).slerp(journey.toQuaternion, eased);
+  if (journey.earthArc) {
+    const tangentView = new THREE.Vector3(0, EARTH_RADIUS_KM - 35, -1000);
+    let lookTarget = tangentView.clone().lerp(new THREE.Vector3(0, 0, 0), Math.min(1, eased * 14));
+    if (raw > .84) lookTarget.lerp(journey.toTarget, Math.min(1, (raw - .84) / .16));
+    camera.lookAt(lookTarget);
+  } else if (journey.returnArc) {
+    const tangentView = new THREE.Vector3(0, EARTH_RADIUS_KM - 35, -1000);
+    const lookTarget = raw < .92 ? new THREE.Vector3(0, 0, 0) : new THREE.Vector3(0, 0, 0).lerp(tangentView, (raw - .92) / .08);
+    camera.lookAt(lookTarget);
+  } else {
+    camera.quaternion.copy(journey.fromQuaternion).slerp(journey.toQuaternion, eased);
+  }
   scale.textContent = formatDistance(camera.position.length());
   if (raw >= 1) finishJourney();
 }
