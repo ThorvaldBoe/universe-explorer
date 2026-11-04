@@ -123,7 +123,8 @@ function updateJourney(now: number) {
   const target = journey.fromTarget.clone().lerp(journey.toTarget, eased);
   if (journey.earthArc || journey.returnArc) {
     const theta = Math.PI / 2 * (journey.earthArc ? eased : 1 - eased);
-    camera.position.set(0, distance * Math.cos(theta), -distance * Math.sin(theta));
+    const radialX = journey.earthArc ? journey.toTarget.x * eased : journey.fromTarget.x * (1 - eased);
+    camera.position.set(radialX, distance * Math.cos(theta), -distance * Math.sin(theta));
   } else {
     const startDirection = journey.fromPosition.clone().sub(journey.fromTarget).normalize();
     const endDirection = journey.toPosition.clone().sub(journey.toTarget).normalize();
@@ -168,7 +169,7 @@ function render() {
   updateJourney(performance.now());
   const distance = Math.max(EARTH_RADIUS_KM, camera.position.length());
   const stars = scene.children.find((object) => object instanceof THREE.Points) as THREE.Points | undefined;
-  if (stars) { stars.position.copy(camera.position); stars.quaternion.copy(camera.quaternion); stars.scale.setScalar(distance * .02); }
+  if (stars) { stars.position.copy(camera.position); stars.quaternion.copy(camera.quaternion); stars.scale.setScalar(distance * 3); }
   for (const [index, group] of sceneGroups) sceneRenderers[stops[index].renderer].update?.(group, elapsed);
   renderer.render(scene, camera);
 }
