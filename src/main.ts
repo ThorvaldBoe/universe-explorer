@@ -67,12 +67,13 @@ function targetFor(index: number) {
 function positionFor(index: number) {
   if (index === 0) return new THREE.Vector3(0, EARTH_RADIUS_KM + .002, 0);
   const target = targetFor(index);
-  return target.clone().add(new THREE.Vector3(0, 0, -stopDistancesKm[index]));
+  const direction = index === 2 ? new THREE.Vector3(0, .5, -.866).normalize() : new THREE.Vector3(0, 0, -1);
+  return target.addScaledVector(direction, stopDistancesKm[index]);
 }
 function orientationAt(position: THREE.Vector3, target: THREE.Vector3, earthSurface = false) {
   const cameraPose = new THREE.PerspectiveCamera();
   cameraPose.position.copy(position);
-  cameraPose.lookAt(earthSurface ? new THREE.Vector3(0, EARTH_RADIUS_KM + .002, -1000) : target);
+  cameraPose.lookAt(earthSurface ? new THREE.Vector3(0, EARTH_RADIUS_KM - 35, -1000) : target);
   return cameraPose.quaternion.clone();
 }
 function ensureScene(index: number) {
@@ -121,16 +122,10 @@ function updateJourney(now: number) {
   const eased = raw * raw * (3 - 2 * raw);
   const distance = Math.exp(Math.log(journey.fromPosition.distanceTo(journey.fromTarget)) + (Math.log(journey.toPosition.distanceTo(journey.toTarget)) - Math.log(journey.fromPosition.distanceTo(journey.fromTarget))) * eased);
   const target = journey.fromTarget.clone().lerp(journey.toTarget, eased);
-  if (journey.earthArc || journey.returnArc) {
-    const theta = Math.PI / 2 * (journey.earthArc ? eased : 1 - eased);
-    const radialX = journey.earthArc ? journey.toTarget.x * eased : journey.fromTarget.x * (1 - eased);
-    camera.position.set(radialX, distance * Math.cos(theta), -distance * Math.sin(theta));
-  } else {
-    const startDirection = journey.fromPosition.clone().sub(journey.fromTarget).normalize();
-    const endDirection = journey.toPosition.clone().sub(journey.toTarget).normalize();
-    const direction = startDirection.lerp(endDirection, eased).normalize();
-    camera.position.copy(target).addScaledVector(direction, distance);
-  }
+  const startDirection = journey.earthArc ? new THREE.Vector3(0, 1, 0) : journey.fromPosition.clone().sub(journey.fromTarget).normalize();
+  const endDirection = journey.returnArc ? new THREE.Vector3(0, 1, 0) : journey.toPosition.clone().sub(journey.toTarget).normalize();
+  const direction = startDirection.lerp(endDirection, eased).normalize();
+  camera.position.copy(target).addScaledVector(direction, distance);
   camera.quaternion.copy(journey.fromQuaternion).slerp(journey.toQuaternion, eased);
   scale.textContent = formatDistance(camera.position.length());
   if (raw >= 1) finishJourney();
