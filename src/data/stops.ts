@@ -5,7 +5,7 @@ export const stops: Stop[] = [
     id: 'earth',
     chapter: '01 · Earth',
     title: 'Home',
-    introduction: 'A blue world, suspended in the dark. This is where every journey begins.',
+    introduction: 'Stand beneath an open sky on our blue world. Begin the climb and watch Earth fall away beneath you.',
     visibleWidthMeters: 12_742_000,
     scaleLabel: 'Earth · 12,742 km across',
     renderer: 'planetary',
