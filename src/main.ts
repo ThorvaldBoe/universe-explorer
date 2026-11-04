@@ -21,6 +21,7 @@ const stopDistancesKm = [EARTH_RADIUS_KM + .002, 100 * AU_KM, 2.4e18, 3.2e22];
 let renderer: THREE.WebGLRenderer | undefined;
 let scene: THREE.Scene;
 let camera: THREE.PerspectiveCamera;
+const cameraWorldPosition = new THREE.Vector3();
 let frame = 0;
 let active = 0;
 let activeRenderer: RendererKind = stops[0].renderer;
@@ -81,6 +82,7 @@ function ensureScene(index: number) {
   if (sceneGroups.has(index)) return;
   const stop = stops[index];
   const group = sceneRenderers[stop.renderer].create(stop);
+  group.userData.worldPosition = group.position.clone();
   scene.add(group); sceneGroups.set(index, group);
 }
 function navigate(requestedIndex: number) {
@@ -95,7 +97,7 @@ function navigate(requestedIndex: number) {
   const toQuaternion = orientationAt(toPosition, toTarget, index === 0);
   journey = {
     from, to: index, start: performance.now(), duration: journeyDuration * 1000,
-    fromPosition: camera.position.clone(), toPosition, fromQuaternion, toQuaternion,
+    fromPosition: cameraWorldPosition.clone(), toPosition, fromQuaternion, toQuaternion,
     fromTarget: targetFor(from), toTarget, earthArc: from === 0 && index > 0, returnArc: index === 0 && from > 0,
   };
   previous.disabled = true; next.disabled = true;
@@ -112,8 +114,9 @@ function finishJourney() {
   if (!journey) return;
   active = journey.to;
   activeRenderer = stops[active].renderer;
-  camera.position.copy(positionFor(active));
-  camera.quaternion.copy(orientationAt(camera.position, targetFor(active), active === 0));
+  cameraWorldPosition.copy(positionFor(active));
+  camera.position.set(0, 0, 0);
+  camera.quaternion.copy(orientationAt(cameraWorldPosition, targetFor(active), active === 0));
   journey = undefined;
   updateInterface(active);
 }
@@ -126,20 +129,21 @@ function updateJourney(now: number) {
   const startDirection = journey.earthArc ? new THREE.Vector3(0, 1, 0) : journey.fromPosition.clone().sub(journey.fromTarget).normalize();
   const endDirection = journey.returnArc ? new THREE.Vector3(0, 1, 0) : journey.toPosition.clone().sub(journey.toTarget).normalize();
   const direction = startDirection.lerp(endDirection, eased).normalize();
-  camera.position.copy(target).addScaledVector(direction, distance);
+  cameraWorldPosition.copy(target).addScaledVector(direction, distance);
+  camera.position.set(0, 0, 0);
   if (journey.earthArc) {
     const tangentView = new THREE.Vector3(0, EARTH_RADIUS_KM - 35, -1000);
     let lookTarget = tangentView.clone().lerp(new THREE.Vector3(0, 0, 0), Math.min(1, eased * 14));
     if (raw > .84) lookTarget.lerp(journey.toTarget, Math.min(1, (raw - .84) / .16));
-    camera.lookAt(lookTarget);
+    camera.lookAt(lookTarget.clone().sub(cameraWorldPosition));
   } else if (journey.returnArc) {
     const tangentView = new THREE.Vector3(0, EARTH_RADIUS_KM - 35, -1000);
     const lookTarget = raw < .92 ? new THREE.Vector3(0, 0, 0) : new THREE.Vector3(0, 0, 0).lerp(tangentView, (raw - .92) / .08);
-    camera.lookAt(lookTarget);
+    camera.lookAt(lookTarget.clone().sub(cameraWorldPosition));
   } else {
     camera.quaternion.copy(journey.fromQuaternion).slerp(journey.toQuaternion, eased);
   }
-  scale.textContent = formatDistance(camera.position.length());
+  scale.textContent = formatDistance(cameraWorldPosition.length());
   if (raw >= 1) finishJourney();
 }
 
@@ -151,8 +155,9 @@ function init() {
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(38, canvas.clientWidth / canvas.clientHeight, .0001, 1e25);
-    camera.position.set(0, EARTH_RADIUS_KM + .002, 0);
-    camera.lookAt(0, EARTH_RADIUS_KM - 35, -1000);
+    cameraWorldPosition.set(0, EARTH_RADIUS_KM + .002, 0);
+    camera.position.set(0, 0, 0);
+    camera.lookAt(new THREE.Vector3(0, EARTH_RADIUS_KM - 35, -1000).sub(cameraWorldPosition));
     const stars = new THREE.Points(starGeometry, new THREE.PointsMaterial({ color: 0xc7d8ff, size: 1.25, sizeAttenuation: false, transparent: true, opacity: .72, depthWrite: false }));
     stars.frustumCulled = false; scene.add(stars);
     scene.add(new THREE.AmbientLight(0x8ea9d8, .42));
@@ -174,10 +179,13 @@ function render() {
   frame = requestAnimationFrame(render);
   const elapsed = clock.getElapsedTime();
   updateJourney(performance.now());
-  const distance = Math.max(EARTH_RADIUS_KM, camera.position.length());
+  const distance = Math.max(EARTH_RADIUS_KM, cameraWorldPosition.length());
   const stars = scene.children.find((object) => object instanceof THREE.Points) as THREE.Points | undefined;
-  if (stars) { stars.position.copy(camera.position); stars.quaternion.copy(camera.quaternion); stars.scale.setScalar(distance * 100); }
-  for (const [index, group] of sceneGroups) sceneRenderers[stops[index].renderer].update?.(group, elapsed);
+  if (stars) { stars.position.set(0, 0, 0); stars.quaternion.copy(camera.quaternion); stars.scale.setScalar(distance * 100); }
+  for (const [index, group] of sceneGroups) {
+    group.position.copy(group.userData.worldPosition as THREE.Vector3).sub(cameraWorldPosition);
+    sceneRenderers[stops[index].renderer].update?.(group, elapsed);
+  }
   renderer.render(scene, camera);
 }
 previous.addEventListener('click', () => navigate(active - 1));
