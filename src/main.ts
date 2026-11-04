@@ -34,7 +34,8 @@ const clock = new THREE.Clock();
 let seed = 8871;
 function random() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
 for (let i = 0; i < starPositions.length; i += 3) {
-  starPositions[i] = (random() - .5) * 2; starPositions[i + 1] = (random() - .5) * 2; starPositions[i + 2] = (random() - .5) * 2;
+  const direction = new THREE.Vector3(random() - .5, random() - .5, random() - .5).normalize();
+  starPositions[i] = direction.x; starPositions[i + 1] = direction.y; starPositions[i + 2] = direction.z;
 }
 starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
 
@@ -164,7 +165,7 @@ function render() {
   updateJourney(performance.now());
   const distance = Math.max(EARTH_RADIUS_KM, camera.position.length());
   const stars = scene.children.find((object) => object instanceof THREE.Points) as THREE.Points | undefined;
-  if (stars) { stars.position.copy(camera.position); stars.quaternion.copy(camera.quaternion); stars.scale.setScalar(distance * 3); }
+  if (stars) { stars.position.copy(camera.position); stars.quaternion.copy(camera.quaternion); stars.scale.setScalar(distance * 100); }
   for (const [index, group] of sceneGroups) sceneRenderers[stops[index].renderer].update?.(group, elapsed);
   renderer.render(scene, camera);
 }
