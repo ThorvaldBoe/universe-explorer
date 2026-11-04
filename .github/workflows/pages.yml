@@ -26,9 +26,15 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run build
+      - name: Cache Playwright browser
+        if: github.event_name == 'pull_request'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - name: Install Chromium for PR visual review
         if: github.event_name == 'pull_request'
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
       - name: Capture visual review artifacts
         if: github.event_name == 'pull_request'
         run: npm run visual-review
