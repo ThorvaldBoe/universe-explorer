@@ -44,7 +44,7 @@ function earthTerrain() {
       const fade = Math.max(0, 1 - radius / size);
       const terrain = (Math.sin(x * .18) * Math.cos(z * .12) + Math.sin((x + z) * .31) * .35) * .00022 * fade;
       const surface = Math.sqrt(Math.max(0, EARTH_RADIUS_KM ** 2 - radius ** 2));
-      positions.push(x, surface + .00008 + terrain, z);
+      positions.push(x, surface + .001 + terrain, z);
       const green = .24 + .08 * (Math.sin(x * .04) * Math.cos(z * .05) + 1);
       color.setRGB(green * .62, green, green * .68);
       colors.push(color.r, color.g, color.b);
@@ -80,7 +80,7 @@ export const planetaryRenderer: SceneRenderer = {
       group.add(earthTerrain());
       group.userData.stopId = 'earth';
       const clouds = new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS_KM + 22, 96, 64), new THREE.MeshStandardMaterial({
-        map: cloudMap(), transparent: true, opacity: .5, roughness: 1, depthWrite: false
+        map: cloudMap(), transparent: true, opacity: .24, roughness: 1, depthWrite: false
       }));
       group.add(clouds);
       group.add(new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS_KM + 90, 64, 48), new THREE.MeshBasicMaterial({
