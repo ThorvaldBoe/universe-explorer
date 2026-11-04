@@ -98,7 +98,7 @@ function navigate(requestedIndex: number) {
   transitionFromLogWidth = Math.log10(stops[from].visibleWidthMeters);
   transitionToLogWidth = Math.log10(stop.visibleWidthMeters);
   transitionFromCamera = camera.position.z;
-  transitionToCamera = targetRenderer.cameraDistance;
+  transitionToCamera = targetRenderer.cameraDistance + (canvas.clientWidth < 650 && targetRenderer.kind === 'planetary' ? 3 : 0);
   transitionStart = performance.now();
 }
 
@@ -110,7 +110,7 @@ function init() {
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(38, canvas.clientWidth / canvas.clientHeight, .1, 100);
-    camera.position.set(0, 0, sceneRenderers[activeRenderer].cameraDistance);
+    camera.position.set(0, 0, sceneRenderers[activeRenderer].cameraDistance + (canvas.clientWidth < 650 && activeRenderer === 'planetary' ? 3 : 0));
     const stars = new THREE.BufferGeometry();
     stars.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
     scene.add(new THREE.Points(stars, new THREE.PointsMaterial({ color: 0xc7d8ff, size: .045, sizeAttenuation: true, transparent: true, opacity: .72 })));
