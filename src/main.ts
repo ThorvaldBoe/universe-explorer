@@ -140,7 +140,7 @@ function init() {
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(38, canvas.clientWidth / canvas.clientHeight, .0001, 1e25);
     camera.position.set(0, EARTH_RADIUS_KM + .002, 0);
-    camera.lookAt(0, EARTH_RADIUS_KM + .002, -1000);
+    camera.lookAt(0, EARTH_RADIUS_KM - 35, -1000);
     const stars = new THREE.Points(starGeometry, new THREE.PointsMaterial({ color: 0xc7d8ff, size: 1.25, sizeAttenuation: false, transparent: true, opacity: .72, depthWrite: false }));
     stars.frustumCulled = false; scene.add(stars);
     scene.add(new THREE.AmbientLight(0x8ea9d8, .42));
