@@ -27,6 +27,10 @@ A browser-based journey from Earth to the observable universe. See [initial-spec
 6. Update documentation, source/asset attribution, and this README when the change alters project conventions.
 7. After the Phase 1 vertical slice, report performance observations, visual limitations, remaining risks, and proposed next milestones before expanding scope.
 
+### Pre-merge visual review
+
+Every pull request runs the production build and a headless Chromium review of Earth, Solar System, Milky Way, and Cosmic Web at desktop, iPad portrait, and phone sizes. The workflow attaches screenshots, WebGL availability reports, browser errors, and a short forward journey recording as a downloadable artifact. Inspect these artifacts and resolve visual issues before merging; this review does not replace checking on physical devices.
+
 ## Scientific and visual standards
 
 - Preserve real astronomical distance relationships and physical sizes where represented. Keep scene-local coordinates and camera framing appropriate to each scale; do not place the universe in one giant GPU coordinate space.

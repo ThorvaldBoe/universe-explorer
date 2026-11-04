@@ -7,13 +7,17 @@ function textSprite(text: string, color: string) {
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, depthWrite: false }));
   sprite.scale.set(4.4, .82, 1); return sprite;
 }
+function seededRandom(seed: number) {
+  let state = seed >>> 0;
+  return () => { state = (state * 1664525 + 1013904223) >>> 0; return state / 4294967296; };
+}
 export const galacticRenderer: SceneRenderer = {
   kind: 'galactic',
   cameraDistance: 10,
   create() {
     const group = new THREE.Group();
     const count = 7200, positions = new Float32Array(count * 3), colors = new Float32Array(count * 3);
-    const random = () => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] / 4294967296; };
+    const random = seededRandom(1701);
     const color = new THREE.Color();
     for (let i = 0; i < count; i++) {
       const arm = Math.floor(random() * 4), radius = .15 + random() * 4.7;
