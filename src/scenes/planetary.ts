@@ -90,7 +90,7 @@ function earthTerrain() {
       const radius = Math.sqrt(x * x + z * z);
       const fade = Math.max(0, 1 - radius / size);
       const terrainNoise = Math.sin(x * .8 + z * .17) * .44 + Math.sin(z * 1.3 - x * .31) * .34 + Math.sin(x * 3.1 + z * 2.7) * .22;
-      const terrain = terrainNoise * .045 * fade * Math.min(1, radius / .5);
+      const terrain = Math.max(0, .018 + terrainNoise * .009) * fade * THREE.MathUtils.smoothstep(radius, 0, 1.2);
       const surface = Math.sqrt(Math.max(0, EARTH_RADIUS_KM ** 2 - radius ** 2));
       positions.push(x, surface + .001 + terrain, z);
       const shade = .82 + terrainNoise * .12;
