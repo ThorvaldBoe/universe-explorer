@@ -1,5 +1,8 @@
 import * as THREE from 'three';
 import { stops } from './data/stops';
+import { sceneRenderers } from './scenes/registry';
+import { setOpacity } from './scenes/types';
+import type { RendererKind } from './types';
 import './style.css';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#universe')!;
@@ -12,97 +15,139 @@ const next = document.querySelector<HTMLButtonElement>('#next')!;
 const progress = document.querySelector<HTMLElement>('#progress')!;
 const fallback = document.querySelector<HTMLElement>('#fallback')!;
 
-let renderer: THREE.WebGLRenderer;
+let renderer: THREE.WebGLRenderer | undefined;
 let scene: THREE.Scene;
 let camera: THREE.PerspectiveCamera;
-let earth: THREE.Mesh;
 let frame = 0;
 let active = 0;
+let activeRenderer: RendererKind = stops[0].renderer;
+let currentGroup: THREE.Group | undefined;
+let nextGroup: THREE.Group | undefined;
+let transitionStart = 0;
+let transitionFromLogWidth = 0;
+let transitionToLogWidth = 0;
+let transitionFromCamera = 9;
+let transitionToCamera = 9;
+const clock = new THREE.Clock();
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const transitionDuration = reducedMotion ? .18 : 2.4;
 
-function setStop(index: number) {
-  active = Math.max(0, Math.min(stops.length - 1, index));
-  const stop = stops[active];
+let seed = 8871;
+function random() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+const starPositions = new Float32Array(1400 * 3);
+for (let i = 0; i < starPositions.length; i += 3) {
+  starPositions[i] = (random() - .5) * 55; starPositions[i + 1] = (random() - .5) * 35; starPositions[i + 2] = (random() - .5) * 34 - 12;
+}
+
+function updateInterface(index: number) {
+  const stop = stops[index];
   title.textContent = stop.title;
   chapter.textContent = `CHAPTER ${stop.chapter.toUpperCase()}`;
   copy.textContent = stop.introduction;
   scale.textContent = stop.scaleLabel;
-  previous.disabled = active === 0;
-  next.innerHTML = active === stops.length - 1 ? 'Journey preview <span aria-hidden="true">↗</span>' : 'Go further <span aria-hidden="true">→</span>';
+  previous.disabled = index === 0;
+  next.innerHTML = index === stops.length - 1 ? 'Return to Earth <span aria-hidden="true">↺</span>' : 'Go further <span aria-hidden="true">→</span>';
   progress.replaceChildren(...stops.map((item, position) => {
-    const dot = document.createElement('span');
-    dot.className = position === active ? 'dot current' : 'dot';
-    dot.title = item.title;
-    return dot;
+    const button = document.createElement('button');
+    button.className = position === index ? 'dot current' : 'dot';
+    button.type = 'button'; button.title = item.title; button.setAttribute('aria-label', `Go to ${item.title}`);
+    button.setAttribute('aria-current', position === index ? 'step' : 'false');
+    button.addEventListener('click', () => navigate(position));
+    return button;
   }));
-  document.querySelector('#progress')?.setAttribute('aria-label', `Stop ${active + 1} of ${stops.length}`);
+  progress.setAttribute('aria-label', `Stop ${index + 1} of ${stops.length}`);
 }
 
-function initScene() {
+function disposeGroup(group: THREE.Group) {
+  group.traverse((object) => {
+    const item = object as THREE.Mesh;
+    item.geometry?.dispose?.();
+    const materials = item.material ? (Array.isArray(item.material) ? item.material : [item.material]) : [];
+    for (const material of materials) {
+      (material as THREE.Material & { map?: THREE.Texture }).map?.dispose();
+      material.dispose();
+    }
+  });
+}
+function finishTransition() {
+  if (!nextGroup) return;
+  if (currentGroup) { scene.remove(currentGroup); disposeGroup(currentGroup); }
+  currentGroup = nextGroup; nextGroup = undefined;
+  activeRenderer = stops[active].renderer;
+  setOpacity(currentGroup, 1);
+}
+
+function navigate(requestedIndex: number) {
+  const index = (requestedIndex + stops.length) % stops.length;
+  if (index === active && currentGroup) return;
+  if (!scene || !renderer) { active = index; updateInterface(active); return; }
+  if (nextGroup) finishTransition();
+  const from = active;
+  active = index;
+  updateInterface(active);
+  const stop = stops[index], targetRenderer = sceneRenderers[stop.renderer];
+  nextGroup = targetRenderer.create(stop);
+  scene.add(nextGroup);
+  setOpacity(nextGroup, 0);
+  transitionFromLogWidth = Math.log10(stops[from].visibleWidthMeters);
+  transitionToLogWidth = Math.log10(stop.visibleWidthMeters);
+  transitionFromCamera = camera.position.z;
+  transitionToCamera = targetRenderer.cameraDistance;
+  transitionStart = performance.now();
+}
+
+function init() {
   try {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
     renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(38, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
-    camera.position.z = 8;
-    scene.add(new THREE.AmbientLight(0x9bbcff, 1.7));
-    const sun = new THREE.DirectionalLight(0xffd9a6, 3.2);
-    sun.position.set(-4, 3, 5);
-    scene.add(sun);
-    const geometry = new THREE.SphereGeometry(2.1, 96, 72);
-    const material = new THREE.MeshStandardMaterial({ color: 0x236ca2, roughness: 0.82, metalness: 0.02 });
-    earth = new THREE.Mesh(geometry, material);
-    scene.add(earth);
-
-    const atmosphere = new THREE.Mesh(
-      new THREE.SphereGeometry(2.18, 72, 56),
-      new THREE.MeshBasicMaterial({ color: 0x55aaff, transparent: true, opacity: 0.11, side: THREE.BackSide }),
-    );
-    scene.add(atmosphere);
-
-    const starPositions = new Float32Array(900 * 3);
-    for (let i = 0; i < starPositions.length; i += 3) {
-      starPositions[i] = (Math.random() - 0.5) * 45;
-      starPositions[i + 1] = (Math.random() - 0.5) * 30;
-      starPositions[i + 2] = (Math.random() - 0.5) * 30 - 8;
-    }
-    const starsGeometry = new THREE.BufferGeometry();
-    starsGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-    scene.add(new THREE.Points(starsGeometry, new THREE.PointsMaterial({ color: 0xc7d8ff, size: 0.055, sizeAttenuation: true })));
-
+    camera = new THREE.PerspectiveCamera(38, canvas.clientWidth / canvas.clientHeight, .1, 100);
+    camera.position.set(0, 0, sceneRenderers[activeRenderer].cameraDistance);
+    const stars = new THREE.BufferGeometry();
+    stars.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    scene.add(new THREE.Points(stars, new THREE.PointsMaterial({ color: 0xc7d8ff, size: .045, sizeAttenuation: true, transparent: true, opacity: .72 })));
+    scene.add(new THREE.AmbientLight(0x8ea9d8, .65));
+    currentGroup = sceneRenderers[stops[0].renderer].create(stops[0]); scene.add(currentGroup);
     window.addEventListener('resize', resize);
     render();
-  } catch {
+  } catch (error) {
     fallback.hidden = false;
+    console.error('Unable to initialize the 3D scene', error);
   }
 }
-
 function resize() {
   if (!renderer) return;
-  const width = canvas.clientWidth;
-  const height = canvas.clientHeight;
-  renderer.setSize(width, height, false);
-  camera.aspect = width / height;
-  camera.updateProjectionMatrix();
+  renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+  camera.aspect = canvas.clientWidth / canvas.clientHeight; camera.updateProjectionMatrix();
 }
-
 function render() {
+  if (!renderer) return;
   frame = requestAnimationFrame(render);
-  earth.rotation.y += 0.0008;
+  const elapsed = clock.getElapsedTime();
+  currentGroup && sceneRenderers[activeRenderer].update?.(currentGroup, elapsed);
+  if (nextGroup) {
+    const raw = Math.min(1, (performance.now() - transitionStart) / (transitionDuration * 1000));
+    const eased = raw < .5 ? 4 * raw ** 3 : 1 - Math.pow(-2 * raw + 2, 3) / 2;
+    const logWidth = transitionFromLogWidth + (transitionToLogWidth - transitionFromLogWidth) * eased;
+    const scaleProgress = transitionToLogWidth === transitionFromLogWidth ? eased : (logWidth - transitionFromLogWidth) / (transitionToLogWidth - transitionFromLogWidth);
+    camera.position.z = Math.exp(Math.log(transitionFromCamera) + (Math.log(transitionToCamera) - Math.log(transitionFromCamera)) * scaleProgress);
+    setOpacity(nextGroup, eased);
+    if (currentGroup) setOpacity(currentGroup, 1 - eased);
+    sceneRenderers[stops[active].renderer].update?.(nextGroup, elapsed);
+    if (raw >= 1) finishTransition();
+  }
   renderer.render(scene, camera);
 }
-
-previous.addEventListener('click', () => setStop(active - 1));
-next.addEventListener('click', () => setStop(active + 1));
+previous.addEventListener('click', () => navigate(active - 1));
+next.addEventListener('click', () => navigate(active === stops.length - 1 ? 0 : active + 1));
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'ArrowRight') setStop(active + 1);
-  if (event.key === 'ArrowLeft') setStop(active - 1);
+  if (event.target instanceof HTMLElement && ['BUTTON', 'INPUT', 'TEXTAREA'].includes(event.target.tagName)) return;
+  if (event.key === 'ArrowRight') navigate(active + 1);
+  if (event.key === 'ArrowLeft') navigate(active - 1);
 });
 window.addEventListener('pagehide', () => {
-  cancelAnimationFrame(frame);
-  renderer?.dispose();
+  cancelAnimationFrame(frame); currentGroup && disposeGroup(currentGroup); nextGroup && disposeGroup(nextGroup); renderer?.dispose();
 });
-
-setStop(0);
-initScene();
+updateInterface(0); init();

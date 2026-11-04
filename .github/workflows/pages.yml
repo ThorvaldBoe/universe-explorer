@@ -1,6 +1,8 @@
 name: Deploy to GitHub Pages
 
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
   workflow_dispatch:
@@ -29,6 +31,7 @@ jobs:
           path: dist
 
   deploy:
+    if: github.event_name == 'push'
     needs: build
     environment:
       name: github-pages
