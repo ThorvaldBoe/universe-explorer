@@ -123,8 +123,7 @@ export const planetaryRenderer: SceneRenderer = {
   },
   update(group, elapsed) {
     if (group.userData.stopId === 'earth') {
-      const earth = group.children.find((child) => child instanceof THREE.Mesh && child.geometry instanceof THREE.SphereGeometry) as THREE.Mesh | undefined;
-      if (earth) earth.rotation.y = elapsed * .015;
+      group.rotation.y = elapsed * .004;
     }
   },
 };
