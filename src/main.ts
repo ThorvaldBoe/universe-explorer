@@ -28,6 +28,7 @@ let transitionFromLogWidth = 0;
 let transitionToLogWidth = 0;
 let transitionFromCamera = 9;
 let transitionToCamera = 9;
+let transitionDirection = 1;
 const clock = new THREE.Clock();
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const transitionDuration = reducedMotion ? .18 : 2.4;
@@ -74,6 +75,8 @@ function finishTransition() {
   if (currentGroup) { scene.remove(currentGroup); disposeGroup(currentGroup); }
   currentGroup = nextGroup; nextGroup = undefined;
   activeRenderer = stops[active].renderer;
+  currentGroup.position.set(0, 0, 0);
+  currentGroup.scale.setScalar(1);
   setOpacity(currentGroup, 1);
 }
 
@@ -83,12 +86,15 @@ function navigate(requestedIndex: number) {
   if (!scene || !renderer) { active = index; updateInterface(active); return; }
   if (nextGroup) finishTransition();
   const from = active;
+  transitionDirection = index >= from ? 1 : -1;
   active = index;
   updateInterface(active);
   const stop = stops[index], targetRenderer = sceneRenderers[stop.renderer];
   nextGroup = targetRenderer.create(stop);
   scene.add(nextGroup);
-  setOpacity(nextGroup, 0);
+  nextGroup.position.x = transitionDirection * 1.8;
+  nextGroup.scale.setScalar(.58);
+  setOpacity(nextGroup, 1);
   transitionFromLogWidth = Math.log10(stops[from].visibleWidthMeters);
   transitionToLogWidth = Math.log10(stop.visibleWidthMeters);
   transitionFromCamera = camera.position.z;
@@ -133,8 +139,12 @@ function render() {
     const logWidth = transitionFromLogWidth + (transitionToLogWidth - transitionFromLogWidth) * eased;
     const scaleProgress = transitionToLogWidth === transitionFromLogWidth ? eased : (logWidth - transitionFromLogWidth) / (transitionToLogWidth - transitionFromLogWidth);
     camera.position.z = Math.exp(Math.log(transitionFromCamera) + (Math.log(transitionToCamera) - Math.log(transitionFromCamera)) * scaleProgress);
-    setOpacity(nextGroup, eased);
-    if (currentGroup) setOpacity(currentGroup, 1 - eased);
+    if (currentGroup) {
+      currentGroup.position.x = -transitionDirection * 1.8 * eased;
+      currentGroup.scale.setScalar(1 - .42 * eased);
+    }
+    nextGroup.position.x = transitionDirection * 1.8 * (1 - eased);
+    nextGroup.scale.setScalar(.58 + .42 * eased);
     sceneRenderers[stops[active].renderer].update?.(nextGroup, elapsed);
     if (raw >= 1) finishTransition();
   }
