@@ -33,15 +33,17 @@ export const galacticRenderer: SceneRenderer = {
     group.add(new THREE.Points(geometry, new THREE.PointsMaterial({ size: .024, vertexColors: true, transparent: true, opacity: .86, depthWrite: false })));
     const core = new THREE.Mesh(new THREE.SphereGeometry(.34, 32, 24), new THREE.MeshBasicMaterial({ color: 0xffd89b, transparent: true, opacity: .65 }));
     core.scale.set(1, .22, .68); group.add(core);
-    const sunPosition = new THREE.Vector3(-2.55, .17, .22);
+    const sunPosition = new THREE.Vector3(-1.69, .17, .22);
     const sun = new THREE.Mesh(new THREE.SphereGeometry(.075, 16, 12), new THREE.MeshBasicMaterial({ color: 0x72dbff }));
     sun.position.copy(sunPosition); group.add(sun);
     const halo = new THREE.Mesh(new THREE.SphereGeometry(.18, 16, 12), new THREE.MeshBasicMaterial({ color: 0x71d9ff, transparent: true, opacity: .2, depthWrite: false }));
     halo.position.copy(sunPosition); group.add(halo);
     const marker = textSprite('SUN · ~26,000 LIGHT-YEARS FROM GALACTIC CENTER', '#c9e8ff');
-    marker.position.set(-2.3, .72, .25); marker.scale.set(5.1, .72, 1); group.add(marker);
+    marker.position.set(-1.5, .72, .25); marker.scale.set(5.1, .72, 1); group.add(marker);
     const note = textSprite('RECONSTRUCTED VIEW · NOT A PHOTOGRAPH', '#aab8d2');
     note.position.set(0, -1.8, 0); note.scale.set(4, .52, 1); group.add(note);
+    group.scale.setScalar(1.46e17);
+    group.position.x = 2.47e17;
     return group;
   },
   update(group, elapsed) { group.rotation.y = Math.sin(elapsed * .08) * .035; },
