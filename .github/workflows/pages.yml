@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Build and deploy Universe Explorer
 
 on:
   pull_request:
@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,7 +26,21 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run build
+      - name: Install Chromium for PR visual review
+        if: github.event_name == 'pull_request'
+        run: npx playwright install --with-deps chromium
+      - name: Capture visual review artifacts
+        if: github.event_name == 'pull_request'
+        run: npm run visual-review
+      - name: Upload visual review artifacts
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-review-pr-${{ github.event.pull_request.number }}
+          path: artifacts/visual-review/
+          if-no-files-found: warn
       - uses: actions/upload-pages-artifact@v3
+        if: github.event_name == 'push'
         with:
           path: dist
 
@@ -36,7 +50,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/deploy-pages@v4
         id: deployment
