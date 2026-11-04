@@ -123,7 +123,7 @@ function finishJourney() {
 function updateJourney(now: number) {
   if (!journey) return;
   const raw = Math.min(1, (now - journey.start) / journey.duration);
-  const eased = raw * raw * (3 - 2 * raw);
+  const eased = journey.earthArc ? raw ** 4 : raw * raw * (3 - 2 * raw);
   const distance = Math.exp(Math.log(journey.fromPosition.distanceTo(journey.fromTarget)) + (Math.log(journey.toPosition.distanceTo(journey.toTarget)) - Math.log(journey.fromPosition.distanceTo(journey.fromTarget))) * eased);
   const target = journey.fromTarget.clone().lerp(journey.toTarget, eased);
   const startDirection = journey.earthArc ? new THREE.Vector3(0, 1, 0) : journey.fromPosition.clone().sub(journey.fromTarget).normalize();
