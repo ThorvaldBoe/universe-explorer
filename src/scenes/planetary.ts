@@ -49,14 +49,14 @@ function terrainTexture() {
   const context = canvas.getContext('2d')!;
   const pixels = context.createImageData(canvas.width, canvas.height);
   for (let py = 0; py < canvas.height; py++) {
-    const z = (py / (canvas.height - 1) - .5) * 24;
+    const z = (py / (canvas.height - 1) - .5) * 8;
     for (let px = 0; px < canvas.width; px++) {
-      const x = (px / (canvas.width - 1) - .5) * 24;
-      const broad = terrainNoise(x, z, .42);
-      const medium = terrainNoise(x + 19, z - 7, 1.8);
-      const small = terrainNoise(x - 4, z + 29, 8);
-      const detail = terrainNoise(x + 61, z + 11, 38);
-      const moisture = terrainNoise(x - 43, z + 17, .8);
+      const x = (px / (canvas.width - 1) - .5) * 8;
+      const broad = terrainNoise(x, z, .48);
+      const medium = terrainNoise(x + 19, z - 7, 2.2);
+      const small = terrainNoise(x - 4, z + 29, 10);
+      const detail = terrainNoise(x + 61, z + 11, 70);
+      const moisture = terrainNoise(x - 43, z + 17, 1);
       const elevation = broad * .52 + medium * .3 + small * .18;
       const dryness = .45 * broad + .35 * moisture + .2 * medium;
       const forest = THREE.MathUtils.smoothstep(dryness, .36, .72);
@@ -76,6 +76,9 @@ function terrainTexture() {
   context.putImageData(pixels, 0, 0);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(3, 3);
   texture.anisotropy = 8;
   return texture;
 }
