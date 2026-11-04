@@ -125,16 +125,17 @@ function updateJourney(now: number) {
   const raw = Math.min(1, (now - journey.start) / journey.duration);
   const eased = journey.earthArc ? raw ** 4 : raw * raw * (3 - 2 * raw);
   const distance = Math.exp(Math.log(journey.fromPosition.distanceTo(journey.fromTarget)) + (Math.log(journey.toPosition.distanceTo(journey.toTarget)) - Math.log(journey.fromPosition.distanceTo(journey.fromTarget))) * eased);
-  const target = journey.fromTarget.clone().lerp(journey.toTarget, eased);
+  const focusProgress = journey.earthArc ? THREE.MathUtils.smoothstep(eased, .56, 1) : eased;
+  const target = journey.fromTarget.clone().lerp(journey.toTarget, focusProgress);
   const startDirection = journey.earthArc ? new THREE.Vector3(0, 1, 0) : journey.fromPosition.clone().sub(journey.fromTarget).normalize();
   const endDirection = journey.returnArc ? new THREE.Vector3(0, 1, 0) : journey.toPosition.clone().sub(journey.toTarget).normalize();
-  const direction = startDirection.lerp(endDirection, eased).normalize();
+  const direction = startDirection.lerp(endDirection, focusProgress).normalize();
   cameraWorldPosition.copy(target).addScaledVector(direction, distance);
   camera.position.set(0, 0, 0);
   if (journey.earthArc) {
     const tangentView = new THREE.Vector3(0, EARTH_RADIUS_KM - 35, -1000);
-    let lookTarget = tangentView.clone().lerp(new THREE.Vector3(0, 0, 0), Math.min(1, eased * 14));
-    if (raw > .84) lookTarget.lerp(journey.toTarget, Math.min(1, (raw - .84) / .16));
+    const lookTarget = tangentView.clone().lerp(new THREE.Vector3(0, 0, 0), Math.min(1, eased * 14))
+      .lerp(journey.toTarget, focusProgress);
     camera.lookAt(lookTarget.clone().sub(cameraWorldPosition));
   } else if (journey.returnArc) {
     const tangentView = new THREE.Vector3(0, EARTH_RADIUS_KM - 35, -1000);
