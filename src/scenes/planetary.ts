@@ -42,11 +42,12 @@ function earthTerrain() {
       const x = (col / segments * 2 - 1) * size;
       const radius = Math.sqrt(x * x + z * z);
       const fade = Math.max(0, 1 - radius / size);
-      const terrain = (Math.sin(x * .18) * Math.cos(z * .12) + Math.sin((x + z) * .31) * .35) * .00022 * fade;
+      const terrainNoise = Math.sin(x * 5.2 + z * 1.7) * .5 + Math.sin(z * 4.8 - x * 2.1) * .3 + Math.sin(x * 1.2) * .2;
+      const terrain = terrainNoise * .025 * fade * Math.min(1, radius / .5);
       const surface = Math.sqrt(Math.max(0, EARTH_RADIUS_KM ** 2 - radius ** 2));
       positions.push(x, surface + .001 + terrain, z);
-      const green = .24 + .08 * (Math.sin(x * .04) * Math.cos(z * .05) + 1);
-      color.setRGB(green * .62, green, green * .68);
+      const green = .31 + terrainNoise * .065;
+      color.setRGB(green * .78, green, green * .68);
       colors.push(color.r, color.g, color.b);
       if (row < segments && col < segments) {
         const a = row * (segments + 1) + col, b = a + segments + 1;
@@ -83,8 +84,16 @@ export const planetaryRenderer: SceneRenderer = {
         map: cloudMap(), transparent: true, opacity: .24, roughness: 1, depthWrite: false
       }));
       group.add(clouds);
-      group.add(new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS_KM + 90, 64, 48), new THREE.MeshBasicMaterial({
-        color: 0x63baff, transparent: true, opacity: .13, side: THREE.BackSide, depthWrite: false
+      group.add(new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS_KM + 90, 64, 48), new THREE.ShaderMaterial({
+        side: THREE.BackSide, transparent: true, depthWrite: false,
+        vertexShader: [
+          'varying vec3 vWorldPosition;',
+          'void main() { vec4 world = modelMatrix * vec4(position, 1.0); vWorldPosition = world.xyz; gl_Position = projectionMatrix * viewMatrix * world; }'
+        ].join('\n'),
+        fragmentShader: [
+          'varying vec3 vWorldPosition;',
+          'void main() { vec3 ray = normalize(vWorldPosition - cameraPosition); vec3 normal = normalize(vWorldPosition); float elevation = max(0.0, dot(ray, normal)); vec3 horizon = vec3(0.20, 0.49, 0.78); vec3 zenith = vec3(0.015, 0.035, 0.10); vec3 sky = mix(horizon, zenith, smoothstep(0.0, 0.9, elevation)); gl_FragColor = vec4(sky, 0.58); }'
+        ].join('\n')
       })));
       const light = new THREE.DirectionalLight(0xffe1b2, 2.5); light.position.set(-12000, 18000, 24000); group.add(light);
       group.add(new THREE.AmbientLight(0x8399bd, .38));
