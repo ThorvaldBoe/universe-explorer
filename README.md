@@ -2,6 +2,10 @@
 
 A browser-based journey from Earth to the observable universe. See [initial-spec.md](initial-spec.md) for product and scientific goals.
 
+## Live preview
+
+[Open Universe Explorer](https://thorvaldboe.github.io/universe-explorer/)
+
 ## Development workflow
 
 ### Branches and pull requests
@@ -42,4 +46,4 @@ A browser-based journey from Earth to the observable universe. See [initial-spec
 
 ## Hosting
 
-GitHub Pages is the static hosting target. Keep deployment configuration in the repository and verify the production build and Pages workflow when changing build or deployment settings. Pages must be enabled in repository settings for GitHub Actions deployment to publish.
+The live site is deployed to GitHub Pages from the `dist` build by the GitHub Actions workflow in `.github/workflows/pages.yml`. Keep the repository Pages source set to **GitHub Actions** so Pages serves the built files, not the raw TypeScript source.
