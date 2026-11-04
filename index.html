@@ -1,32 +1,37 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#050914">
-  <meta name="description" content="A journey from Earth into the wider universe.">
-  <title>Universe Explorer</title>
-  <style>
-    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #050914; color: #f4f6ff; }
-    * { box-sizing: border-box; }
-    body { min-height: 100svh; margin: 0; overflow: hidden; background: radial-gradient(ellipse at 50% 112%, #183e69 0, #0c1b35 22%, #070e1c 55%, #050914 78%); }
-    .stars, .stars::before, .stars::after { position: fixed; inset: 0; pointer-events: none; content: ""; background-image: radial-gradient(1px 1px at 12% 18%, #fff 98%, transparent), radial-gradient(1px 1px at 78% 28%, #dce7ff 98%, transparent), radial-gradient(1.5px 1.5px at 58% 72%, #fff 98%, transparent), radial-gradient(1px 1px at 31% 61%, #b9caff 98%, transparent), radial-gradient(1px 1px at 89% 82%, #fff 98%, transparent), radial-gradient(1px 1px at 44% 37%, #fff 98%, transparent); background-size: 330px 280px; opacity: .68; }
-    .stars::before { transform: translate(90px, 70px) scale(1.3); opacity: .35; }
-    .stars::after { transform: translate(-40px, -30px) scale(.8); opacity: .45; }
-    main { position: relative; display: grid; min-height: 100svh; place-items: center; text-align: center; padding: 2rem; }
-    .content { transform: translateY(-5vh); }
-    .eyebrow { color: #9cb5e7; font-size: .72rem; letter-spacing: .24em; text-transform: uppercase; }
-    h1 { margin: 1rem 0 .65rem; font-size: clamp(2.8rem, 9vw, 6.7rem); line-height: .98; font-weight: 500; letter-spacing: -.065em; }
-    p { color: #b6c1d7; font-size: clamp(1rem, 2vw, 1.2rem); }
-    .globe { position: fixed; width: min(76vw, 760px); aspect-ratio: 1; left: 50%; bottom: -68vw; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(circle at 35% 26%, #427eb4 0, #174575 25%, #0c2546 52%, #07162d 68%, transparent 70%); box-shadow: 0 -24px 100px #3276bd55, inset 0 22px 38px #9dd6ff25; }
-    @media (min-width: 900px) { .globe { bottom: -610px; } }
-    footer { position: fixed; bottom: 1.5rem; left: 0; right: 0; color: #71809a; font-size: .75rem; letter-spacing: .12em; text-align: center; text-transform: uppercase; }
-    @media (prefers-reduced-motion: no-preference) { .stars { animation: drift 90s linear infinite; } @keyframes drift { to { transform: translateY(18px); } } }
-  </style>
-</head>
-<body>
-  <div class="stars" aria-hidden="true"></div><div class="globe" aria-hidden="true"></div>
-  <main><div class="content"><div class="eyebrow">A journey through space and scale</div><h1>Universe<br>Explorer</h1><p>Our journey begins here.</p></div></main>
-  <footer>Earth · Solar System · Milky Way · Beyond</footer>
-</body>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#050914">
+    <meta name="description" content="A guided journey through the scales of the universe.">
+    <title>Universe Explorer</title>
+  </head>
+  <body>
+    <div class="space" aria-hidden="true"></div>
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="wordmark" href="./" aria-label="Universe Explorer home"><span class="mark">✳</span> UNIVERSE EXPLORER</a>
+        <span class="topbar-note">A journey through space and scale</span>
+      </header>
+      <section class="stage" aria-labelledby="scene-title">
+        <div class="scene-wrap">
+          <canvas id="universe" aria-label="A view of Earth in space"></canvas>
+          <div id="fallback" class="fallback" hidden>3D imagery is unavailable in this browser. Your journey can still continue through the scene descriptions.</div>
+          <div class="scene-meta">
+            <span class="eyebrow" id="chapter">CHAPTER 01 · EARTH</span>
+            <h1 id="scene-title">Home</h1>
+            <p id="scene-copy">A blue world, suspended in the dark. This is where every journey begins.</p>
+          </div>
+          <div class="scale-chip"><span class="pulse"></span><span id="scale-readout">Earth · 12,742 km across</span></div>
+        </div>
+      </section>
+      <footer class="controls">
+        <button id="previous" class="secondary" type="button" disabled aria-label="Previous scene">← <span>Previous</span></button>
+        <div class="progress" id="progress" aria-label="Journey progress"></div>
+        <button id="next" class="primary" type="button">Begin journey <span aria-hidden="true">→</span></button>
+      </footer>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>
