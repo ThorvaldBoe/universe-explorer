@@ -70,9 +70,12 @@ export const planetaryRenderer: SceneRenderer = {
   create(stop) {
     const group = new THREE.Group();
     if (stop.id === 'earth') {
-      const earth = new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS_KM, 96, 64), new THREE.MeshPhysicalMaterial({
-        map: earthMap(), roughness: .92, metalness: 0, clearcoat: .08
-      }));
+      const earthMaterial = new THREE.MeshPhysicalMaterial({ map: earthMap(), roughness: .92, metalness: 0, clearcoat: .08 });
+      new THREE.TextureLoader().load(import.meta.env.BASE_URL + 'textures/earth-blue-marble.jpg', (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 8;
+        earthMaterial.map?.dispose(); earthMaterial.map = texture; earthMaterial.needsUpdate = true;
+      });
+      const earth = new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS_KM, 128, 96), earthMaterial);
       group.add(earth);
       group.add(earthTerrain());
       group.userData.stopId = 'earth';
