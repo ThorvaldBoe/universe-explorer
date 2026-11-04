@@ -15,7 +15,7 @@ export const stops: Stop[] = [
     id: 'solar-system',
     chapter: '02 · Solar System',
     title: 'Our neighborhood',
-    introduction: 'The planets are worlds apart. At true distance, even the giant Sun becomes a point in a great emptiness.',
+    introduction: 'The planets are worlds apart. Their orbital distances are to scale; the visible planet markers are enlarged.',
     visibleWidthMeters: 9.0e12,
     scaleLabel: 'Planetary system · ~60 AU across',
     renderer: 'planetary',
