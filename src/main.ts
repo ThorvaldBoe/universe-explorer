@@ -28,6 +28,7 @@ let activeRenderer: RendererKind = stops[0].renderer;
 let journey: { from: number; to: number; start: number; duration: number; fromPosition: THREE.Vector3; toPosition: THREE.Vector3; fromQuaternion: THREE.Quaternion; toQuaternion: THREE.Quaternion; fromTarget: THREE.Vector3; toTarget: THREE.Vector3; earthArc: boolean; returnArc: boolean } | undefined;
 const sceneGroups = new Map<number, THREE.Group>();
 const starGeometry = new THREE.BufferGeometry();
+let starMaterial: THREE.PointsMaterial | undefined;
 const starPositions = new Float32Array(1600 * 3);
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const journeyDuration = reducedMotion ? .01 : 4.6;
@@ -106,8 +107,8 @@ function navigate(requestedIndex: number) {
 
 function formatDistance(distanceKm: number) {
   if (distanceKm < 1) return Math.round(distanceKm * 1000) + ' m from Earth';
-  if (distanceKm < 1000) return Math.round(distanceKm) + ' km from Earth';
-  if (distanceKm < 100 * AU_KM) return (distanceKm / AU_KM).toFixed(2) + ' AU from Earth';
+  if (distanceKm < 1_000_000) return distanceKm.toPrecision(3) + ' km from Earth';
+  if (distanceKm < 100 * AU_KM) return (distanceKm / AU_KM).toPrecision(3) + ' AU from Earth';
   return (distanceKm / LIGHT_YEAR_KM).toPrecision(3) + ' light-years from Earth';
 }
 function finishJourney() {
@@ -159,7 +160,8 @@ function init() {
     cameraWorldPosition.set(0, EARTH_RADIUS_KM + .002, 0);
     camera.position.set(0, 0, 0);
     camera.lookAt(new THREE.Vector3(0, EARTH_RADIUS_KM - 35, -1000).sub(cameraWorldPosition));
-    const stars = new THREE.Points(starGeometry, new THREE.PointsMaterial({ color: 0xc7d8ff, size: 1.25, sizeAttenuation: false, transparent: true, opacity: .72, depthWrite: false }));
+    starMaterial = new THREE.PointsMaterial({ color: 0xc7d8ff, size: 1.25, sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false });
+    const stars = new THREE.Points(starGeometry, starMaterial);
     stars.frustumCulled = false; scene.add(stars);
     scene.add(new THREE.AmbientLight(0x8ea9d8, .42));
     ensureScene(0);
@@ -181,6 +183,7 @@ function render() {
   const elapsed = clock.getElapsedTime();
   updateJourney(performance.now());
   const distance = Math.max(EARTH_RADIUS_KM, cameraWorldPosition.length());
+  if (starMaterial) starMaterial.opacity = .72 * THREE.MathUtils.smoothstep(distance, EARTH_RADIUS_KM * 1.5, EARTH_RADIUS_KM * 12);
   const stars = scene.children.find((object) => object instanceof THREE.Points) as THREE.Points | undefined;
   if (stars) { stars.position.set(0, 0, 0); stars.quaternion.copy(camera.quaternion); stars.scale.setScalar(distance * 100); }
   for (const [index, group] of sceneGroups) {
