@@ -61,10 +61,10 @@ function terrainTexture() {
       const dryness = .45 * broad + .35 * moisture + .2 * medium;
       const forest = THREE.MathUtils.smoothstep(dryness, .36, .72);
       const rock = THREE.MathUtils.smoothstep(elevation, .68, .9) * .48;
-      const grass = [92 + medium * 32, 91 + moisture * 43, 48 + broad * 24];
-      const woodland = [47 + small * 28, 65 + moisture * 34, 37 + broad * 22];
-      const stone = [116 + detail * 34, 105 + detail * 32, 83 + detail * 29];
-      const grain = (detail - .5) * 18;
+      const grass = [112 + medium * 48, 116 + moisture * 52, 62 + broad * 34];
+      const woodland = [32 + small * 42, 82 + moisture * 58, 35 + broad * 30];
+      const stone = [132 + detail * 54, 119 + detail * 48, 98 + detail * 42];
+      const grain = (detail - .5) * 28;
       const offset = (py * canvas.width + px) * 4;
       for (let channel = 0; channel < 3; channel++) {
         const greenValue = THREE.MathUtils.lerp(grass[channel], woodland[channel], forest);
@@ -93,7 +93,7 @@ function earthTerrain() {
       const terrain = Math.max(0, .018 + terrainNoise * .009) * fade * THREE.MathUtils.smoothstep(radius, 0, 1.2);
       const surface = Math.sqrt(Math.max(0, EARTH_RADIUS_KM ** 2 - radius ** 2));
       positions.push(x, surface + .001 + terrain, z);
-      const shade = .82 + terrainNoise * .12;
+      const shade = .96 + terrainNoise * .035;
       color.setRGB(shade, shade, shade);
       colors.push(color.r, color.g, color.b);
       uvs.push(col / segments, row / segments);
