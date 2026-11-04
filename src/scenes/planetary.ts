@@ -4,6 +4,10 @@ import type { SceneRenderer } from './types';
 const planetColors = [0xaca7a0, 0xd89e73, 0x648cc8, 0xb5a486, 0xd5b68b, 0x82c6c9, 0x4f77d8, 0x747fd1];
 const names = ['Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune'];
 const distancesAu = [.39, .72, 1, 1.52, 5.2, 9.58, 19.2, 30.05];
+const radiiKm = [2439.7, 6051.8, 6371, 3389.5, 69911, 58232, 25362, 24622];
+const AU_KM = 149_597_870.7;
+const EARTH_RADIUS_KM = 6371;
+
 
 function label(text: string, position: THREE.Vector3, color = '#dce8ff') {
   const canvas = document.createElement('canvas'); canvas.width = 320; canvas.height = 64;
@@ -28,6 +32,34 @@ function cloudMap() {
   for (let i = 0; i < 280; i++) { const x = random()*1024, y = random()*512, w = 18+random()*80, h = 3+random()*10; c.fillStyle = 'rgba(235,244,255,' + (.025+random()*.08) + ')'; c.beginPath(); c.ellipse(x,y,w,h,0,0,Math.PI*2); c.fill(); }
   const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 4; return texture;
 }
+function earthTerrain() {
+  const size = 20, segments = 128;
+  const positions: number[] = [], colors: number[] = [], indices: number[] = [];
+  const color = new THREE.Color();
+  for (let row = 0; row <= segments; row++) {
+    const z = (row / segments * 2 - 1) * size;
+    for (let col = 0; col <= segments; col++) {
+      const x = (col / segments * 2 - 1) * size;
+      const radius = Math.sqrt(x * x + z * z);
+      const fade = Math.max(0, 1 - radius / size);
+      const terrain = (Math.sin(x * .18) * Math.cos(z * .12) + Math.sin((x + z) * .31) * .35) * .00022 * fade;
+      const surface = Math.sqrt(Math.max(0, EARTH_RADIUS_KM ** 2 - radius ** 2));
+      positions.push(x, surface + .00008 + terrain, z);
+      const green = .24 + .08 * (Math.sin(x * .04) * Math.cos(z * .05) + 1);
+      color.setRGB(green * .62, green, green * .68);
+      colors.push(color.r, color.g, color.b);
+      if (row < segments && col < segments) {
+        const a = row * (segments + 1) + col, b = a + segments + 1;
+        indices.push(a, b, a + 1, b, b + 1, a + 1);
+      }
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setIndex(indices); geometry.computeVertexNormals();
+  return new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide }));
+}
 function body(radius: number, color: number) {
   return new THREE.Mesh(new THREE.SphereGeometry(radius, 32, 24), new THREE.MeshStandardMaterial({ color, roughness: .9 }));
 }
@@ -38,38 +70,56 @@ export const planetaryRenderer: SceneRenderer = {
   create(stop) {
     const group = new THREE.Group();
     if (stop.id === 'earth') {
-      const earth = new THREE.Mesh(new THREE.SphereGeometry(2.05, 96, 64), new THREE.MeshPhysicalMaterial({ map: earthMap(), roughness: .92, metalness: 0, clearcoat: .08 }));
-      earth.position.set(.8, -1, 0); group.add(earth);
-      const clouds = new THREE.Mesh(new THREE.SphereGeometry(2.075, 96, 64), new THREE.MeshStandardMaterial({ map: cloudMap(), transparent: true, opacity: .52, roughness: 1, depthWrite: false }));
-      clouds.position.copy(earth.position); group.add(clouds);
-      const atmosphere = new THREE.Mesh(new THREE.SphereGeometry(2.13, 64, 48), new THREE.MeshBasicMaterial({ color: 0x63baff, transparent: true, opacity: .16, side: THREE.BackSide, depthWrite: false }));
-      atmosphere.position.copy(earth.position); group.add(atmosphere);
-      const halo = new THREE.Mesh(new THREE.SphereGeometry(2.23, 64, 48), new THREE.MeshBasicMaterial({ color: 0x3588e5, transparent: true, opacity: .075, side: THREE.BackSide, depthWrite: false }));
-      halo.position.copy(earth.position); group.add(halo);
-      const light = new THREE.DirectionalLight(0xffe1b2, 3.1); light.position.set(-4, 3, 5); group.add(light);
+      const earth = new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS_KM, 96, 64), new THREE.MeshPhysicalMaterial({
+        map: earthMap(), roughness: .92, metalness: 0, clearcoat: .08
+      }));
+      group.add(earth);
+      group.add(earthTerrain());
+      const clouds = new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS_KM + 22, 96, 64), new THREE.MeshStandardMaterial({
+        map: cloudMap(), transparent: true, opacity: .5, roughness: 1, depthWrite: false
+      }));
+      group.add(clouds);
+      group.add(new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS_KM + 90, 64, 48), new THREE.MeshBasicMaterial({
+        color: 0x63baff, transparent: true, opacity: .13, side: THREE.BackSide, depthWrite: false
+      })));
+      const light = new THREE.DirectionalLight(0xffe1b2, 2.5); light.position.set(-12000, 18000, 24000); group.add(light);
       group.add(new THREE.AmbientLight(0x8399bd, .38));
       return group;
     }
-    group.add(new THREE.AmbientLight(0x98aeda, 1.4));
-    const light = new THREE.PointLight(0xffd386, 65, 100); group.add(light);
-    group.add(body(.28, 0xffc65c));
-    group.add(label('SUN', new THREE.Vector3(0, .5, 0), '#ffe2a2'));
-    const scale = 10 / 64;
+
+    group.add(new THREE.AmbientLight(0x98aeda, .7));
+    const sunPosition = new THREE.Vector3(-AU_KM, 0, 0);
+    const sun = new THREE.Mesh(new THREE.SphereGeometry(696340, 48, 32), new THREE.MeshBasicMaterial({ color: 0xffc963 }));
+    sun.position.copy(sunPosition); group.add(sun);
+    const sunlight = new THREE.PointLight(0xffd386, 2.2, 0, 2); sunlight.position.copy(sunPosition); group.add(sunlight);
+    const markerPositions: number[] = [], markerColors: number[] = [];
+    const markerColor = new THREE.Color();
+    const angles = [1.8, 3.6, 0, .5, 2.2, 4.2, .2, 2.8];
     for (let i = 0; i < distancesAu.length; i++) {
-      const d = distancesAu[i];
-      const orbit = new THREE.Mesh(new THREE.RingGeometry(d * scale - .006, d * scale + .006, 128), new THREE.MeshBasicMaterial({ color: 0x8396b6, transparent: true, opacity: .2, side: THREE.DoubleSide, depthWrite: false }));
-      orbit.rotation.x = Math.PI / 2; group.add(orbit);
-      const angle = [1.8, 3.6, 5.1, .5, 2.2, 4.2, .2, 2.8][i];
-      const pos = new THREE.Vector3(Math.cos(angle) * d * scale, 0, Math.sin(angle) * d * scale);
-      const object = body(i === 4 ? .14 : .075, planetColors[i]);
-      object.position.copy(pos); group.add(object);
-      group.add(label(names[i], pos.clone().add(new THREE.Vector3(0, .24, 0))));
+      const distance = distancesAu[i] * AU_KM;
+      const orbit = new THREE.Mesh(
+        new THREE.RingGeometry(distance * .9997, distance * 1.0003, 192),
+        new THREE.MeshBasicMaterial({ color: 0x8396b6, transparent: true, opacity: .26, side: THREE.DoubleSide, depthWrite: false })
+      );
+      orbit.position.copy(sunPosition); orbit.rotation.x = Math.PI / 2; group.add(orbit);
+      const position = new THREE.Vector3(
+        sunPosition.x + Math.cos(angles[i]) * distance,
+        0,
+        Math.sin(angles[i]) * distance
+      );
+      const planet = body(radiiKm[i], planetColors[i]);
+      planet.position.copy(position); group.add(planet);
+      markerPositions.push(position.x, position.y, position.z);
+      markerColor.setHex(planetColors[i]); markerColors.push(markerColor.r, markerColor.g, markerColor.b);
     }
-    const note = label('PLANET SIZES ENLARGED FOR VISIBILITY', new THREE.Vector3(0, -2.0, 0), '#aab8d2');
-    note.scale.set(4.8, .46, 1); group.add(note);
+    const markers = new THREE.BufferGeometry();
+    markers.setAttribute('position', new THREE.Float32BufferAttribute(markerPositions, 3));
+    markers.setAttribute('color', new THREE.Float32BufferAttribute(markerColors, 3));
+    group.add(new THREE.Points(markers, new THREE.PointsMaterial({ size: 5, sizeAttenuation: false, vertexColors: true, depthWrite: false })));
     return group;
   },
   update(group, elapsed) {
-    if (group.children[0] instanceof THREE.Mesh) group.children[0].rotation.y = elapsed * .08;
+    const earth = group.children.find((child) => child instanceof THREE.Mesh && child.geometry instanceof THREE.SphereGeometry) as THREE.Mesh | undefined;
+    if (earth) earth.rotation.y = elapsed * .015;
   },
 };
