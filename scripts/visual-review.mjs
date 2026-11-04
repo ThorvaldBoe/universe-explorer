@@ -58,10 +58,10 @@ try {
   const videoPage = await videoContext.newPage();
   videoPage.on('pageerror', (error) => browserErrors.push({ viewport: 'transition-video', type: 'pageerror', message: error.message }));
   await videoPage.goto(baseUrl, { waitUntil: 'networkidle' });
+  await videoPage.getByRole('button', { name: /Begin journey/ }).click();
+  await delay(5000);
   await videoPage.getByRole('button', { name: /Go further/ }).click();
-  await delay(2800);
-  await videoPage.getByRole('button', { name: /Go further/ }).click();
-  await delay(2800);
+  await delay(5000);
   const video = videoPage.video();
   await videoPage.close();
   await videoContext.close();
