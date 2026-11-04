@@ -71,7 +71,7 @@ export const planetaryRenderer: SceneRenderer = {
     const group = new THREE.Group();
     if (stop.id === 'earth') {
       const earthMaterial = new THREE.MeshPhysicalMaterial({ map: earthMap(), roughness: .92, metalness: 0, clearcoat: .08 });
-      new THREE.TextureLoader().load(import.meta.env.BASE_URL + 'textures/earth-blue-marble.jpg', (texture) => {
+      new THREE.TextureLoader().load(new URL('textures/earth-blue-marble.jpg', document.baseURI).toString(), (texture) => {
         texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 8;
         earthMaterial.map?.dispose(); earthMaterial.map = texture; earthMaterial.needsUpdate = true;
       });
