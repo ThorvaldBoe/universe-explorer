@@ -6,6 +6,11 @@ import './style.css';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#universe')!;
 const sceneWrap = document.querySelector<HTMLElement>('.scene-wrap')!;
+const streetPanoramaUrl = new URL('./assets/city-street-panorama.png', import.meta.url).href;
+const streetPhoto = document.createElement('div');
+streetPhoto.className = 'street-photo';
+streetPhoto.style.backgroundImage = `url("${streetPanoramaUrl}")`;
+sceneWrap.prepend(streetPhoto);
 const title = document.querySelector<HTMLElement>('#scene-title')!;
 const chapter = document.querySelector<HTMLElement>('#chapter')!;
 const copy = document.querySelector<HTMLElement>('#scene-copy')!;
@@ -234,6 +239,10 @@ function render() {
   frame = requestAnimationFrame(render);
   const elapsed = clock.getElapsedTime();
   updateJourney(performance.now());
+  const ascentAltitudeKm = Math.max(0, cameraWorldPosition.length() - EARTH_RADIUS_KM);
+  const zoomProgress = THREE.MathUtils.smoothstep(Math.log10(ascentAltitudeKm + .0017), Math.log10(.0017), Math.log10(8));
+  streetPhoto.style.transform = 'scale(' + (1 - .78 * zoomProgress) + ')';
+  streetPhoto.style.opacity = String(1 - THREE.MathUtils.smoothstep(ascentAltitudeKm, 8, 160));
   const distance = Math.max(EARTH_RADIUS_KM, cameraWorldPosition.length());
   if (starMaterial) starMaterial.opacity = .72 * THREE.MathUtils.smoothstep(distance, EARTH_RADIUS_KM * 1.5, EARTH_RADIUS_KM * 12);
   const stars = scene.children.find((object) => object instanceof THREE.Points) as THREE.Points | undefined;
