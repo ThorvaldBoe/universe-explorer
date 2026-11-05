@@ -172,6 +172,10 @@ function updateJourney(now: number) {
     const lookProgress = THREE.MathUtils.smoothstep(eased, 0, .24);
     const lookTarget = journey.fromLookAt.clone().lerp(journey.toTarget, lookProgress);
     camera.lookAt(lookTarget.clone().sub(cameraWorldPosition));
+  } else if (stops[journey.from].id === 'earth' && stops[journey.to].id === 'moon') {
+    const landingViewProgress = THREE.MathUtils.smoothstep(eased, .84, 1);
+    const lookTarget = journey.toTarget.clone().lerp(journey.toLookAt, landingViewProgress);
+    camera.lookAt(lookTarget.sub(cameraWorldPosition));
   } else {
     const lookTarget = journey.fromLookAt.clone().lerp(journey.toLookAt, eased);
     camera.lookAt(lookTarget.clone().sub(cameraWorldPosition));
