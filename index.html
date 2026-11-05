@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#050914">
-    <meta name="description" content="A guided journey through the scales of the universe.">
+    <meta name="description" content="A continuous journey from a city street, above Earth, to the Moon.">
     <title>Universe Explorer</title>
   </head>
   <body>
@@ -16,20 +16,20 @@
       </header>
       <section class="stage" aria-labelledby="scene-title">
         <div class="scene-wrap">
-          <canvas id="universe" aria-label="A view of Earth in space"></canvas>
+          <canvas id="universe" aria-label="A city street, Earth, and the Moon along a continuous journey"></canvas>
           <div id="fallback" class="fallback" hidden>3D imagery is unavailable in this browser. Your journey can still continue through the scene descriptions.</div>
-          <div class="scene-meta">
-            <span class="eyebrow" id="chapter">CHAPTER 01 · EARTH</span>
-            <h1 id="scene-title">Home</h1>
-            <p id="scene-copy">A blue world, suspended in the dark. This is where every journey begins.</p>
-          </div>
           <div class="scale-chip"><span class="pulse"></span><span id="scale-readout">Earth · 12,742 km across</span></div>
+        </div>
+        <div class="scene-meta">
+          <span class="eyebrow" id="chapter">CHAPTER 01 · EARTH</span>
+          <h1 id="scene-title">Home</h1>
+          <p id="scene-copy">A blue world, suspended in the dark. This is where every journey begins.</p>
         </div>
       </section>
       <footer class="controls">
         <button id="previous" class="secondary" type="button" disabled aria-label="Previous scene">← <span>Previous</span></button>
         <div class="progress" id="progress" aria-label="Journey progress"></div>
-        <button id="next" class="primary" type="button">Begin journey <span aria-hidden="true">→</span></button>
+        <button id="next" class="primary" type="button">Begin ascent <span aria-hidden="true">→</span></button>
       </footer>
     </main>
     <script type="module" src="/src/main.ts"></script>

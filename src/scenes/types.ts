@@ -1,11 +1,13 @@
-import type { Group } from 'three';
+import type { Group, Vector3 } from 'three';
 import type { RendererKind, Stop } from '../types';
+
+export interface SceneUpdateContext { cameraWorldPosition: Vector3; }
 
 export interface SceneRenderer {
   kind: RendererKind;
   cameraDistance: number;
   create(stop: Stop): Group;
-  update?(group: Group, elapsedSeconds: number): void;
+  update?(group: Group, elapsedSeconds: number, context?: SceneUpdateContext): void;
 }
 
 export function setOpacity(group: Group, opacity: number) {
