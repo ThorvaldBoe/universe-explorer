@@ -241,7 +241,8 @@ function render() {
   updateJourney(performance.now());
   const ascentAltitudeKm = Math.max(0, cameraWorldPosition.length() - EARTH_RADIUS_KM);
   const zoomProgress = THREE.MathUtils.smoothstep(Math.log10(ascentAltitudeKm + .0017), Math.log10(.0017), Math.log10(8));
-  streetPhoto.style.transform = 'scale(' + (1 - .78 * zoomProgress) + ')';
+  streetPhoto.style.transform = 'scale(1)';
+  streetPhoto.style.backgroundSize = (200 - 100 * zoomProgress) + '% auto';
   streetPhoto.style.opacity = String(1 - THREE.MathUtils.smoothstep(ascentAltitudeKm, 8, 160));
   const distance = Math.max(EARTH_RADIUS_KM, cameraWorldPosition.length());
   if (starMaterial) starMaterial.opacity = .72 * THREE.MathUtils.smoothstep(distance, EARTH_RADIUS_KM * 1.5, EARTH_RADIUS_KM * 12);
