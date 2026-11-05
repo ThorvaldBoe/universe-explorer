@@ -361,7 +361,7 @@ export const cityRenderer: SceneRenderer = {
     group.add(streetDetails);
     group.userData.streetDetails = streetDetails;
 
-    const photoMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide, transparent: true, opacity: 1, depthWrite: false, toneMapped: false });
+    const photoMaterial = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true, opacity: 1, depthWrite: false, toneMapped: false });
     const photoSphere = new THREE.Mesh(new THREE.SphereGeometry(2000, 96, 64), photoMaterial);
     photoSphere.rotation.y = Math.PI;
     photoSphere.renderOrder = 2;
@@ -375,8 +375,14 @@ export const cityRenderer: SceneRenderer = {
       photoMaterial.needsUpdate = true;
       photoSphere.visible = true;
       group.userData.panoramaReady = true;
+      const canvas = document.querySelector<HTMLCanvasElement>('#universe');
+      if (canvas) canvas.dataset.panoramaStatus = 'loaded';
       (group.userData.sharedTextures as THREE.Texture[]).push(texture);
-    }, undefined, () => console.error('The street panorama failed to load from ' + cityStreetPanoramaUrl));
+    }, undefined, () => {
+      const canvas = document.querySelector<HTMLCanvasElement>('#universe');
+      if (canvas) canvas.dataset.panoramaStatus = 'error';
+      console.error('The street panorama failed to load from ' + cityStreetPanoramaUrl);
+    });
     group.userData.photoSphere = photoSphere;
     group.userData.lodDistanceKm = 0;
     return group;
@@ -390,7 +396,7 @@ export const cityRenderer: SceneRenderer = {
     const photoSphere = group.userData.photoSphere as THREE.Mesh;
     (photoSphere.material as THREE.MeshBasicMaterial).opacity = photoOpacity;
     photoSphere.visible = photoOpacity > .001 && Boolean(group.userData.panoramaReady);
-    streetDetails.visible = altitudeKm > .04 && altitudeKm < .2;
+    streetDetails.visible = (altitudeKm > .04 && altitudeKm < .2) || (!group.userData.panoramaReady && altitudeKm < 4);
     const levels = group.userData.tileLevels as THREE.Group[];
     levels.forEach((item, index) => { item.visible = index === level && altitudeKm >= .04; });
     group.userData.lodDistanceKm = level;
