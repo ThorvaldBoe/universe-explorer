@@ -348,6 +348,17 @@ export const cityRenderer: SceneRenderer = {
     sunlight.position.set(-12000, 18000, 8000);
     group.add(sunlight);
     group.add(new THREE.AmbientLight(0x8799b2, .55));
+
+    const streetDetails = new THREE.Group();
+    const tileLayers = new Set(levels);
+    for (const child of [...group.children]) {
+      if (!tileLayers.has(child as THREE.Group)) {
+        group.remove(child);
+        streetDetails.add(child);
+      }
+    }
+    group.add(streetDetails);
+    group.userData.streetDetails = streetDetails;
     group.userData.lodDistanceKm = 0;
     return group;
   },
@@ -355,6 +366,8 @@ export const cityRenderer: SceneRenderer = {
     const cityCenter = group.userData.worldPosition as THREE.Vector3;
     const altitudeKm = context ? context.cameraWorldPosition.distanceTo(cityCenter) : 0;
     const level = altitudeKm < .5 ? 0 : altitudeKm < 2.5 ? 1 : 2;
+    const streetDetails = group.userData.streetDetails as THREE.Group;
+    streetDetails.visible = altitudeKm < 4;
     if (group.userData.lodDistanceKm !== level) {
       const levels = group.userData.tileLevels as THREE.Group[];
       levels.forEach((item, index) => { item.visible = index === level; });
