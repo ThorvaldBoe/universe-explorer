@@ -63,6 +63,7 @@ function makeLunarDetail() {
     context.beginPath(); context.arc(x, y, radius, 0, Math.PI * 2); context.fill();
   }
   const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   texture.anisotropy = 8;
@@ -145,7 +146,7 @@ export const lunarRenderer: SceneRenderer = {
     localMap.needsUpdate = true;
     const detailMap = makeLunarDetail();
     const ground = lunarSurface(frame, new THREE.MeshStandardMaterial({
-      map: localMap, bumpMap: detailMap, bumpScale: .04, roughness: 1, metalness: 0, side: THREE.DoubleSide,
+      map: detailMap, bumpMap: detailMap, bumpScale: .04, roughness: 1, metalness: 0, side: THREE.DoubleSide,
     }));
     group.add(ground);
 
@@ -163,6 +164,19 @@ export const lunarRenderer: SceneRenderer = {
       rock.position.copy(point);
       rock.rotation.set(random() * 2, random() * Math.PI, random() * 2);
       group.add(rock);
+    }
+
+    for (let i = 0; i < 18; i++) {
+      const east = (random() - .5) * .28;
+      const ahead = .035 + i * .065;
+      const radius = Math.hypot(east, ahead);
+      const surface = Math.sqrt(Math.max(0, MOON_RADIUS_KM ** 2 - radius ** 2)) - MOON_RADIUS_KM;
+      const point = frame.up.clone().multiplyScalar(MOON_RADIUS_KM + surface)
+        .addScaledVector(frame.right, east).addScaledVector(frame.forward, ahead);
+      const boulder = new THREE.Mesh(new THREE.DodecahedronGeometry(.0015 + random() * .0025, 0), rockMaterial);
+      boulder.position.copy(point);
+      boulder.rotation.set(random() * 2, random() * Math.PI, random() * 2);
+      group.add(boulder);
     }
 
     const sunlight = new THREE.DirectionalLight(0xe4e7ef, 1.9);
