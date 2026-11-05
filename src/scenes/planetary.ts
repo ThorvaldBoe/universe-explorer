@@ -41,7 +41,7 @@ export const planetaryRenderer: SceneRenderer = {
   cameraDistance: 9,
   create(stop) {
     const group = new THREE.Group();
-    if (stop.id === 'earth' || stop.id === 'continents') {
+    if (stop.id === 'earth' || stop.id === 'continents' || stop.id === 'atmosphere') {
       const earthMaterial = new THREE.MeshPhysicalMaterial({ map: earthMap(), roughness: .92, metalness: 0, clearcoat: .08 });
       new THREE.TextureLoader().load(new URL('textures/earth-blue-marble.jpg', document.baseURI).toString(), (texture) => {
         texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 8;
