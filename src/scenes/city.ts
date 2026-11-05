@@ -90,6 +90,7 @@ function asphaltTexture() {
 }
 
 function sidewalkTexture() {
+  const random = seededRandom(713);
   const canvas = document.createElement('canvas');
   canvas.width = 256;
   canvas.height = 256;
@@ -105,7 +106,7 @@ function sidewalkTexture() {
     context.beginPath(); context.moveTo(x, 0); context.lineTo(x, 256); context.stroke();
   }
   for (let i = 0; i < 900; i++) {
-    const x = Math.random() * 256, y = Math.random() * 256;
+    const x = random() * 256, y = random() * 256;
     context.fillStyle = i % 2 ? '#a6a49a' : '#83827b';
     context.fillRect(x, y, 1, 1);
   }
