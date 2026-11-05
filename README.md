@@ -38,7 +38,7 @@ Every pull request runs the production build and a headless Chromium review of e
 - Label content as observed/measured, reconstructed/modeled, illustrative, or speculative. In particular, identify the city and lunar landing scenes as illustrations, and distinguish them from observed planetary imagery.
 - Distinguish visible width, object diameter, altitude, orbital distance, and light-travel time. Use appropriate units and sensible precision.
 - Verify quantitative claims against authoritative sources. Record source links, asset origins, and license/attribution details alongside project content.
-- Treat the city map and street panorama as AI-generated illustrations, not depictions of a specific real city. Build all aerial zoom levels and tiles from one master image; do not generate neighboring tiles independently. Keep the street panorama as one continuous source image and fade it into the matching master map during ascent.
+- Treat the city map and street panorama as AI-generated illustrations, not depictions of a specific real city. Build all aerial zoom levels and tiles from one master image; do not generate neighboring tiles independently. Keep the street panorama as one continuous source image; scale it back while it fills the view, then fade it into the Earth scene during ascent.
 
 ## Engineering and accessibility standards
 
