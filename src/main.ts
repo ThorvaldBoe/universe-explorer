@@ -253,6 +253,7 @@ window.addEventListener('pagehide', () => {
   cancelAnimationFrame(frame);
   const disposedTextures = new Set<THREE.Texture>();
   for (const group of sceneGroups.values()) {
+    group.userData.disposed = true;
     group.traverse((object) => {
       const mesh = object as THREE.Mesh; mesh.geometry?.dispose?.();
       const materials = mesh.material ? (Array.isArray(mesh.material) ? mesh.material : [mesh.material]) : [];
