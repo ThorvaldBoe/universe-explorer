@@ -9,7 +9,7 @@ const earthUp = [0, Math.cos(EARTH_LATITUDE), Math.sin(EARTH_LATITUDE)] as [numb
 const cityForward = [0, Math.sin(EARTH_LATITUDE), -Math.cos(EARTH_LATITUDE)] as [number, number, number];
 // Keep one view direction for every Earth ascent stop: almost straight down, with enough
 // forward angle to keep the avenue visible beneath the camera.
-const earthViewAngle = 12 * Math.PI / 180;
+const earthViewAngle = 35 * Math.PI / 180;
 const earthViewDirection = [
   cityForward[0] * Math.sin(earthViewAngle) - earthUp[0] * Math.cos(earthViewAngle),
   cityForward[1] * Math.sin(earthViewAngle) - earthUp[1] * Math.cos(earthViewAngle),
@@ -69,7 +69,7 @@ function earthStop(
     focusPositionKm: [0, 0, 0],
     lookAtPositionKm: earthLookAt(cameraPositionKm),
     cameraUp: earthScreenUp,
-    cameraFovDegrees: 58,
+    cameraFovDegrees: altitudeKm < 1 ? 92 : altitudeKm < 10 ? 94 : altitudeKm < 200 ? 100 : 110,
     ...(altitudeKm === 0 ? { scenePositionKm: earthSurface, sceneUp: earthUp } : {}),
   };
 }
