@@ -5,7 +5,7 @@ import { chromium } from '@playwright/test';
 
 const artifactDir = 'artifacts/visual-review';
 const baseUrl = 'http://127.0.0.1:4173/universe-explorer/';
-const stops = ['On the street', 'Earth from orbit', 'A world of its own'];
+const stops = ['On the street', 'Above the avenue', 'The city below', 'Above the atmosphere', 'A continental view', 'Earth from orbit', 'A world of its own'];
 const browserErrors = [];
 await mkdir(artifactDir, { recursive: true });
 
@@ -60,9 +60,11 @@ try {
   videoPage.on('pageerror', (error) => browserErrors.push({ viewport: 'transition-video', type: 'pageerror', message: error.message }));
   await videoPage.goto(baseUrl, { waitUntil: 'networkidle' });
   await videoPage.getByRole('button', { name: /Begin ascent/ }).click();
-  await videoPage.getByRole('heading', { name: stops[1] }).waitFor({ timeout: 15000 });
-  await videoPage.getByRole('button', { name: /Go further/ }).click();
-  await videoPage.getByRole('heading', { name: stops[2] }).waitFor({ timeout: 20000 });
+  for (let i = 1; i < stops.length - 1; i++) {
+    await videoPage.getByRole('heading', { name: stops[i] }).waitFor({ timeout: 20000 });
+    await videoPage.getByRole('button', { name: /Go further/ }).click();
+  }
+  await videoPage.getByRole('heading', { name: stops[stops.length - 1] }).waitFor({ timeout: 20000 });
   await delay(800);
   const video = videoPage.video();
   await videoPage.close();
