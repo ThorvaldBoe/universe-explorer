@@ -48,6 +48,7 @@ try {
     await writeFile(`${artifactDir}/${viewport.name}-report.json`, JSON.stringify({
       viewport, webglAvailable: webgl, sceneTitles: scenesForViewport,
       canvasSize: await page.locator('#universe').evaluate((canvas) => ({ width: canvas.clientWidth, height: canvas.clientHeight })),
+      panoramaStatus: await page.locator('#universe').getAttribute('data-panorama-status'),
     }, null, 2));
     await context.close();
   }
