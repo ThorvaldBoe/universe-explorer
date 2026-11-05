@@ -253,7 +253,7 @@ export const cityRenderer: SceneRenderer = {
 
     const masterMap = urbanMap();
     const levels = cityMapLevels(masterMap);
-    for (const level of levels) group.add(level);
+    levels.forEach((level, index) => { level.visible = index === 0; group.add(level); });
     group.userData.tileLevels = levels;
     group.userData.worldPosition = group.position.clone();
 
@@ -388,18 +388,15 @@ export const cityRenderer: SceneRenderer = {
     const altitudeKm = context ? context.cameraWorldPosition.distanceTo(cityCenter) : 0;
     const level = altitudeKm < .5 ? 0 : altitudeKm < 2.5 ? 1 : 2;
     const streetDetails = group.userData.streetDetails as THREE.Group;
-    const photoOpacity = 1 - THREE.MathUtils.smoothstep(altitudeKm, .18, .5);
+    const photoOpacity = 1 - THREE.MathUtils.smoothstep(altitudeKm, .04, .2);
     const photoSphere = group.userData.photoSphere as THREE.Mesh;
     (photoSphere.material as THREE.MeshBasicMaterial).opacity = photoOpacity;
     photoSphere.visible = photoOpacity > .001;
-    streetDetails.visible = altitudeKm > .16 && altitudeKm < 4;
-    if (group.userData.lodDistanceKm !== level) {
-      const levels = group.userData.tileLevels as THREE.Group[];
-      levels.forEach((item, index) => { item.visible = index === level; });
-      group.userData.lodDistanceKm = level;
-    }
-    const tileOpacity = THREE.MathUtils.smoothstep(altitudeKm, .16, .5);
+    streetDetails.visible = altitudeKm > .04 && altitudeKm < .2;
     const levels = group.userData.tileLevels as THREE.Group[];
+    levels.forEach((item, index) => { item.visible = index === level && altitudeKm >= .04; });
+    group.userData.lodDistanceKm = level;
+    const tileOpacity = THREE.MathUtils.smoothstep(altitudeKm, .04, .2);
     for (const tileLevel of levels) {
       tileLevel.traverse((object) => {
         const mesh = object as THREE.Mesh;
