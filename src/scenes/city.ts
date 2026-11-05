@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { SceneRenderer } from './types';
 const cityMasterUrl = new URL('../assets/city-master.svg', import.meta.url).href;
+const cityStreetPanoramaUrl = new URL('../assets/city-street-panorama.png', import.meta.url).href;
 import { createTexturePyramid, type TexturePyramidLevel } from './texture-pyramid';
 
 const EARTH_RADIUS_METERS = 6_371_000;
@@ -180,7 +181,7 @@ function tileLevelGroup(level: TexturePyramidLevel) {
   for (const tile of level.tiles) {
     const centerX = (tile.x + .5) * tileWidth - MAP_SIZE_METERS / 2;
     const centerZ = MAP_SIZE_METERS / 2 - (tile.y + .5) * tileDepth;
-    const material = new THREE.MeshStandardMaterial({ map: tile.texture, roughness: 1, metalness: 0 });
+    const material = new THREE.MeshStandardMaterial({ map: tile.texture, roughness: 1, metalness: 0, transparent: true, opacity: 1, depthWrite: false });
     const mesh = new THREE.Mesh(curvedGeometry(tileWidth, tileDepth, centerX, centerZ), material);
     mesh.position.set(centerX, 0, centerZ);
     group.add(mesh);
@@ -252,7 +253,7 @@ export const cityRenderer: SceneRenderer = {
 
     const masterMap = urbanMap();
     const levels = cityMapLevels(masterMap);
-    for (const level of levels) group.add(level);
+    levels.forEach((level, index) => { level.visible = index === 0; group.add(level); });
     group.userData.tileLevels = levels;
     group.userData.worldPosition = group.position.clone();
 
@@ -359,6 +360,30 @@ export const cityRenderer: SceneRenderer = {
     }
     group.add(streetDetails);
     group.userData.streetDetails = streetDetails;
+
+    const photoMaterial = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true, opacity: 1, depthWrite: false, toneMapped: false });
+    const photoSphere = new THREE.Mesh(new THREE.SphereGeometry(2000, 96, 64), photoMaterial);
+    photoSphere.rotation.y = Math.PI;
+    photoSphere.renderOrder = 2;
+    group.add(photoSphere);
+    photoSphere.visible = false;
+    new THREE.TextureLoader().load(cityStreetPanoramaUrl, (texture) => {
+      if (group.userData.disposed) { texture.dispose(); return; }
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = 8;
+      photoMaterial.map = texture;
+      photoMaterial.needsUpdate = true;
+      photoSphere.visible = true;
+      group.userData.panoramaReady = true;
+      const canvas = document.querySelector<HTMLCanvasElement>('#universe');
+      if (canvas) canvas.dataset.panoramaStatus = 'loaded';
+      (group.userData.sharedTextures as THREE.Texture[]).push(texture);
+    }, undefined, () => {
+      const canvas = document.querySelector<HTMLCanvasElement>('#universe');
+      if (canvas) canvas.dataset.panoramaStatus = 'error';
+      console.error('The street panorama failed to load from ' + cityStreetPanoramaUrl);
+    });
+    group.userData.photoSphere = photoSphere;
     group.userData.lodDistanceKm = 0;
     return group;
   },
@@ -367,11 +392,23 @@ export const cityRenderer: SceneRenderer = {
     const altitudeKm = context ? context.cameraWorldPosition.distanceTo(cityCenter) : 0;
     const level = altitudeKm < .5 ? 0 : altitudeKm < 2.5 ? 1 : 2;
     const streetDetails = group.userData.streetDetails as THREE.Group;
-    streetDetails.visible = altitudeKm < 4;
-    if (group.userData.lodDistanceKm !== level) {
-      const levels = group.userData.tileLevels as THREE.Group[];
-      levels.forEach((item, index) => { item.visible = index === level; });
-      group.userData.lodDistanceKm = level;
+    const photoOpacity = 1 - THREE.MathUtils.smoothstep(altitudeKm, .04, .2);
+    const photoSphere = group.userData.photoSphere as THREE.Mesh;
+    (photoSphere.material as THREE.MeshBasicMaterial).opacity = photoOpacity;
+    photoSphere.visible = photoOpacity > .001 && Boolean(group.userData.panoramaReady);
+    streetDetails.visible = (altitudeKm > .04 && altitudeKm < .2) || (!group.userData.panoramaReady && altitudeKm < 4);
+    const levels = group.userData.tileLevels as THREE.Group[];
+    levels.forEach((item, index) => { item.visible = index === level && altitudeKm >= .04; });
+    group.userData.lodDistanceKm = level;
+    const tileOpacity = THREE.MathUtils.smoothstep(altitudeKm, .04, .2);
+    for (const tileLevel of levels) {
+      tileLevel.traverse((object) => {
+        const mesh = object as THREE.Mesh;
+        if (!mesh.material) return;
+        for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+          (material as THREE.MeshStandardMaterial).opacity = tileOpacity;
+        }
+      });
     }
   },
 };
