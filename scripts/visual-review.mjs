@@ -5,7 +5,7 @@ import { chromium } from '@playwright/test';
 
 const artifactDir = 'artifacts/visual-review';
 const baseUrl = 'http://127.0.0.1:4173/universe-explorer/';
-const stops = ['Home', 'Our neighborhood', 'A home among stars', 'The cosmic web'];
+const stops = ['On the street', 'Earth from orbit', 'A world of its own'];
 const browserErrors = [];
 await mkdir(artifactDir, { recursive: true });
 
@@ -31,13 +31,13 @@ try {
   ]) {
     const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height }, deviceScaleFactor: 1, reducedMotion: 'reduce' });
     const page = await context.newPage();
-    const scenesForViewport = viewport.name === 'desktop' ? stops : stops.slice(0, 3);
+    const scenesForViewport = stops;
     page.on('pageerror', (error) => browserErrors.push({ viewport: viewport.name, type: 'pageerror', message: error.message }));
     page.on('console', (message) => {
       if (message.type() === 'error') browserErrors.push({ viewport: viewport.name, type: 'console', message: message.text() });
     });
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
-    await page.screenshot({ path: `${artifactDir}/${viewport.name}-01-earth.png`, fullPage: true, timeout: 90000 });
+    await page.screenshot({ path: `${artifactDir}/${viewport.name}-01-${stops[0].toLowerCase().replaceAll(' ', '-')}.png`, fullPage: true, timeout: 90000 });
     for (let i = 1; i < scenesForViewport.length; i++) {
       await page.getByRole('button', { name: `Go to ${scenesForViewport[i]}` }).click();
       await page.getByRole('heading', { name: scenesForViewport[i] }).waitFor();
@@ -59,10 +59,11 @@ try {
   const videoPage = await videoContext.newPage();
   videoPage.on('pageerror', (error) => browserErrors.push({ viewport: 'transition-video', type: 'pageerror', message: error.message }));
   await videoPage.goto(baseUrl, { waitUntil: 'networkidle' });
-  await videoPage.getByRole('button', { name: /Begin journey/ }).click();
-  await delay(5000);
+  await videoPage.getByRole('button', { name: /Begin ascent/ }).click();
+  await videoPage.getByRole('heading', { name: stops[1] }).waitFor({ timeout: 15000 });
   await videoPage.getByRole('button', { name: /Go further/ }).click();
-  await delay(5000);
+  await videoPage.getByRole('heading', { name: stops[2] }).waitFor({ timeout: 20000 });
+  await delay(800);
   const video = videoPage.video();
   await videoPage.close();
   await videoContext.close();
