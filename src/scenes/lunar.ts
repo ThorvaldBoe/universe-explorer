@@ -101,7 +101,7 @@ function lunarSurface(frame: ReturnType<typeof siteFrame>, material: THREE.Mater
         const craterRadius = Math.hypot(localRight - crater.x, localForward - crater.z) / crater.radius;
         if (craterRadius < 1.15) {
           if (craterRadius < .78) relief -= crater.depth * (1 - (craterRadius / .78) ** 2) ** 2;
-          relief += crater.depth * .12 * Math.exp(-((craterRadius - .92) / .09) ** 2);
+          relief += crater.depth * .12 * Math.exp(-(((craterRadius - .92) / .09) ** 2));
         }
       }
       const point = frame.up.clone().multiplyScalar(MOON_RADIUS_KM + surface + relief)
