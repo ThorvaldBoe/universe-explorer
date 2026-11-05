@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { SceneRenderer } from './types';
+import cityMasterUrl from '../assets/city-master.svg?url';
 import { createTexturePyramid, type TexturePyramidLevel } from './texture-pyramid';
 
 const EARTH_RADIUS_METERS = 6_371_000;
@@ -210,6 +211,34 @@ function cityMapLevels(master: HTMLCanvasElement) {
   return createTexturePyramid(master, 256, 2).map(tileLevelGroup);
 }
 
+function texturesIn(levels: THREE.Group[]) {
+  const textures: THREE.Texture[] = [];
+  for (const level of levels) {
+    level.traverse((object) => {
+      const material = (object as THREE.Mesh).material;
+      if (material) for (const item of Array.isArray(material) ? material : [material]) {
+        const map = (item as THREE.Material & { map?: THREE.Texture }).map;
+        if (map) textures.push(map);
+      }
+    });
+  }
+  return textures;
+}
+
+function disposeTileLevels(levels: THREE.Group[]) {
+  for (const level of levels) {
+    level.traverse((object) => {
+      const mesh = object as THREE.Mesh;
+      mesh.geometry?.dispose?.();
+      const materials = mesh.material ? (Array.isArray(mesh.material) ? mesh.material : [mesh.material]) : [];
+      for (const material of materials) {
+        (material as THREE.Material & { map?: THREE.Texture }).map?.dispose();
+        material.dispose();
+      }
+    });
+  }
+}
+
 export const cityRenderer: SceneRenderer = {
   kind: 'city',
   cameraDistance: .002,
@@ -221,7 +250,8 @@ export const cityRenderer: SceneRenderer = {
     group.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), up);
     group.scale.setScalar(.001);
 
-    const levels = cityMapLevels(urbanMap());
+    const masterMap = urbanMap();
+    const levels = cityMapLevels(masterMap);
     for (const level of levels) group.add(level);
     group.userData.tileLevels = levels;
     group.userData.worldPosition = group.position.clone();
@@ -229,17 +259,29 @@ export const cityRenderer: SceneRenderer = {
     const asphalt = asphaltTexture();
     const concrete = sidewalkTexture();
     const facade = facadeTexture();
-    group.userData.sharedTextures = [asphalt, concrete, facade, ...(levels.flatMap((level) => {
-      const textures: THREE.Texture[] = [];
-      level.traverse((object) => {
-        const material = (object as THREE.Mesh).material;
-        if (material) for (const item of Array.isArray(material) ? material : [material]) {
-          const map = (item as THREE.Material & { map?: THREE.Texture }).map;
-          if (map) textures.push(map);
-        }
+    group.userData.sharedTextures = [asphalt, concrete, facade, ...texturesIn(levels)];
+
+    const cityImage = new Image();
+    cityImage.onload = () => {
+      if (group.userData.disposed) return;
+      const context = masterMap.getContext('2d');
+      if (!context) return;
+      context.clearRect(0, 0, masterMap.width, masterMap.height);
+      context.drawImage(cityImage, 0, 0, masterMap.width, masterMap.height);
+      const replacementLevels = cityMapLevels(masterMap);
+      const activeLevel = Number(group.userData.lodDistanceKm ?? 0);
+      const previousLevels = group.userData.tileLevels as THREE.Group[];
+      previousLevels.forEach((level) => group.remove(level));
+      disposeTileLevels(previousLevels);
+      group.userData.tileLevels = replacementLevels;
+      replacementLevels.forEach((level, index) => {
+        level.visible = index === activeLevel;
+        group.add(level);
       });
-      return textures;
-    }))];
+      group.userData.sharedTextures = [asphalt, concrete, facade, ...texturesIn(replacementLevels)];
+    };
+    cityImage.onerror = () => console.warn('The generated city map could not be loaded; using the built-in fallback map.');
+    cityImage.src = cityMasterUrl;
 
     const roadMaterial = new THREE.MeshStandardMaterial({ map: asphalt, roughness: .96 });
     addGroundPlane(group, 0, 0, 14, MAP_SIZE_METERS, roadMaterial, .08);
