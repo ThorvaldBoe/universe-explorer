@@ -142,8 +142,6 @@ export const lunarRenderer: SceneRenderer = {
     group.add(moon);
 
     const frame = siteFrame(stop);
-    const localMap = map.clone();
-    localMap.needsUpdate = true;
     const detailMap = makeLunarDetail();
     const ground = lunarSurface(frame, new THREE.MeshStandardMaterial({
       map: detailMap, bumpMap: detailMap, bumpScale: .04, roughness: 1, metalness: 0, side: THREE.DoubleSide,
@@ -183,7 +181,7 @@ export const lunarRenderer: SceneRenderer = {
     sunlight.position.copy(frame.up).multiplyScalar(5000);
     group.add(sunlight);
     group.add(new THREE.AmbientLight(0x606879, .45));
-    group.userData.sharedTextures = [map, localMap, detailMap];
+    group.userData.sharedTextures = [map, detailMap];
     return group;
   },
 };
