@@ -80,6 +80,14 @@ function siteFrame(stop: Parameters<SceneRenderer['create']>[0]) {
 function lunarSurface(frame: ReturnType<typeof siteFrame>, material: THREE.Material) {
   const size = 12, segments = 160;
   const positions: number[] = [], uvs: number[] = [], detailUvs: number[] = [], indices: number[] = [];
+  let seed = 307;
+  const random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  const craters = Array.from({ length: 72 }, () => ({
+    x: (random() - .5) * size * .9,
+    z: (random() - .5) * size * .9,
+    radius: .09 + random() * .3,
+    depth: .006 + random() * .024,
+  }));
   for (let row = 0; row <= segments; row++) {
     const v = row / segments;
     const localForward = (v - .5) * size;
@@ -88,7 +96,14 @@ function lunarSurface(frame: ReturnType<typeof siteFrame>, material: THREE.Mater
       const localRight = (u - .5) * size;
       const radius = Math.hypot(localRight, localForward);
       const surface = Math.sqrt(Math.max(0, MOON_RADIUS_KM ** 2 - radius ** 2)) - MOON_RADIUS_KM;
-      const relief = (Math.sin(localRight * 7.1 + localForward * 2.4) + Math.sin(localForward * 4.2 - localRight * 1.8)) * .0007;
+      let relief = (Math.sin(localRight * 7.1 + localForward * 2.4) + Math.sin(localForward * 4.2 - localRight * 1.8)) * .0015;
+      for (const crater of craters) {
+        const craterRadius = Math.hypot(localRight - crater.x, localForward - crater.z) / crater.radius;
+        if (craterRadius < 1.15) {
+          if (craterRadius < .78) relief -= crater.depth * (1 - (craterRadius / .78) ** 2) ** 2;
+          relief += crater.depth * .12 * Math.exp(-((craterRadius - .92) / .09) ** 2);
+        }
+      }
       const point = frame.up.clone().multiplyScalar(MOON_RADIUS_KM + surface + relief)
         .addScaledVector(frame.right, localRight)
         .addScaledVector(frame.forward, localForward);
@@ -130,7 +145,7 @@ export const lunarRenderer: SceneRenderer = {
     localMap.needsUpdate = true;
     const detailMap = makeLunarDetail();
     const ground = lunarSurface(frame, new THREE.MeshStandardMaterial({
-      map: localMap, bumpMap: detailMap, bumpScale: .02, roughness: 1, metalness: 0, side: THREE.DoubleSide,
+      map: localMap, bumpMap: detailMap, bumpScale: .04, roughness: 1, metalness: 0, side: THREE.DoubleSide,
     }));
     group.add(ground);
 
