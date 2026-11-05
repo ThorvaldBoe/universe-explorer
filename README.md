@@ -22,14 +22,14 @@ A browser-based journey from Earth to the observable universe. See [initial-spec
 1. Read the relevant specification and inspect the existing code before changing it.
 2. Agree on a small milestone and acceptance criteria. Prefer reusable modules and data-driven content over scene-specific shortcuts.
 3. Keep scientific facts, units, provenance, and references separate from rendering and interface code.
-4. Implement incrementally. For the initial release, prioritize Phase 0 and the four-scene Phase 1 proof of concept. The current vertical slice pilots a continuous Earth-to-Moon journey; validate its camera motion and scene handoffs before expanding to all 18 stops.
+4. Implement incrementally. For the initial release, prioritize Phase 0 and the four-scene Phase 1 proof of concept. The current vertical slice pilots a continuous Earth-to-Moon journey. Its Earth ascent uses gradual street, neighborhood, city, atmosphere, continental, and orbital views before the lunar scene; validate its camera motion and scene handoffs before expanding to all 18 stops.
 5. Run the checks relevant to the change, exercise the affected user flow, and report what was and was not verified in the pull request.
 6. Update documentation, source/asset attribution, and this README when the change alters project conventions.
 7. After the Phase 1 vertical slice, report performance observations, visual limitations, remaining risks, and proposed next milestones before expanding scope.
 
 ### Pre-merge visual review
 
-Every pull request runs the production build and a headless Chromium review of the city street, Earth from orbit, and lunar surface at desktop, iPad portrait, and phone sizes. The workflow attaches screenshots, WebGL availability reports, browser errors, and a short forward journey recording as a downloadable artifact. Inspect these artifacts and resolve visual issues before merging; this review does not replace checking on physical devices.
+Every pull request runs the production build and a headless Chromium review of every journey stop at desktop, iPad portrait, and phone sizes. The workflow attaches screenshots, WebGL availability reports, browser errors, and a forward journey recording as a downloadable artifact. Inspect these artifacts and resolve visual issues before merging; this review does not replace checking on physical devices.
 
 ## Scientific and visual standards
 
@@ -38,7 +38,7 @@ Every pull request runs the production build and a headless Chromium review of t
 - Label content as observed/measured, reconstructed/modeled, illustrative, or speculative. In particular, identify the city and lunar landing scenes as illustrations, and distinguish them from observed planetary imagery.
 - Distinguish visible width, object diameter, altitude, orbital distance, and light-travel time. Use appropriate units and sensible precision.
 - Verify quantitative claims against authoritative sources. Record source links, asset origins, and license/attribution details alongside project content.
-- Treat the city map as AI-generated illustration. Build all of its zoom levels and tiles from its one master image; do not generate neighboring tiles independently.
+- Treat the city map and street panorama as AI-generated illustrations, not depictions of a specific real city. Build all aerial zoom levels and tiles from one master image; do not generate neighboring tiles independently. Keep the street panorama as one continuous source image and fade it into the matching master map during ascent.
 
 ## Engineering and accessibility standards
 
