@@ -49,12 +49,14 @@ export const planetaryRenderer: SceneRenderer = {
       });
       const earth = new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS_KM, 128, 96), earthMaterial);
       group.add(earth);
+      const earthVisuals: THREE.Object3D[] = [earth];
       group.userData.stopId = 'earth';
       const clouds = new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS_KM + 22, 96, 64), new THREE.MeshStandardMaterial({
         map: cloudMap(), transparent: true, opacity: .24, roughness: 1, depthWrite: false
       }));
       group.add(clouds);
-      group.add(new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS_KM + 90, 64, 48), new THREE.ShaderMaterial({
+      earthVisuals.push(clouds);
+      const atmosphere = new THREE.Mesh(new THREE.SphereGeometry(EARTH_RADIUS_KM + 90, 64, 48), new THREE.ShaderMaterial({
         side: THREE.BackSide, transparent: true, depthWrite: false,
         vertexShader: [
           'varying vec3 vWorldPosition;',
@@ -66,7 +68,10 @@ export const planetaryRenderer: SceneRenderer = {
           'varying vec3 vPlanetCenter;',
           'void main() { vec3 ray = normalize(vWorldPosition - cameraPosition); vec3 normal = normalize(vWorldPosition - vPlanetCenter); float elevation = max(0.0, dot(ray, normal)); vec3 horizon = vec3(0.20, 0.49, 0.78); vec3 zenith = vec3(0.015, 0.035, 0.10); vec3 sky = mix(horizon, zenith, smoothstep(0.0, 0.85, elevation)); gl_FragColor = vec4(sky, 0.76); }'
         ].join('\n')
-      })));
+      }));
+      group.add(atmosphere);
+      earthVisuals.push(atmosphere);
+      group.userData.earthVisuals = earthVisuals;
       const light = new THREE.DirectionalLight(0xffe1b2, 2.5); light.position.set(-12000, 18000, 24000); group.add(light);
       group.add(new THREE.AmbientLight(0x8399bd, .38));
       return group;
@@ -105,9 +110,12 @@ export const planetaryRenderer: SceneRenderer = {
     group.add(new THREE.Points(markers, new THREE.PointsMaterial({ size: 5, sizeAttenuation: false, vertexColors: true, depthWrite: false })));
     return group;
   },
-  update(group, elapsed) {
+  update(group, elapsed, context) {
     if (group.userData.stopId === 'earth') {
       group.rotation.y = elapsed * .004;
+      const altitudeKm = context ? context.cameraWorldPosition.length() - EARTH_RADIUS_KM : 0;
+      const visible = altitudeKm >= 80;
+      (group.userData.earthVisuals as THREE.Object3D[]).forEach((visual) => { visual.visible = visible; });
     }
   },
 };
