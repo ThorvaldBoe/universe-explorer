@@ -81,7 +81,7 @@ export const stops: Stop[] = [
   },
   earthStop('neighborhood', '01 · Earth', 'Above the avenue', 'Street blocks begin to resolve into a neighborhood as the camera lifts above the rooftops.', .35, 1200, 'Neighborhood · 350 m above the surface'),
   earthStop('city', '01 · Earth', 'The city below', 'The city grid and the surrounding landscape come into view, while the road remains beneath you.', 8, 30_000, 'City scale · 8 km above the surface'),
-  earthStop('atmosphere', '02 · Earth and Moon', 'Above the atmosphere', 'The blue edge of the atmosphere appears. The continent is still close enough to read.', 160, 800_000, 'Upper atmosphere · 160 km above the surface'),
+  earthStop('atmosphere', '02 · Earth and Moon', 'Above the atmosphere', 'The blue edge of the atmosphere appears. The continent is still close enough to read.', 160, 800_000, 'Upper atmosphere · 160 km above the surface', 'planetary'),
   earthStop('continents', '02 · Earth and Moon', 'A continental view', 'A curved horizon opens around the continent. Earth’s true scale begins to emerge.', 2200, 15_000_000, 'Low orbit · 2,200 km above the surface', 'planetary'),
   earthStop('earth', '02 · Earth and Moon', 'Earth from orbit', 'The whole planet now fits in view. The Moon is still nearly 384,400 km away.', 22_300 - EARTH_RADIUS_KM, 30_000_000, 'Earth · 22,300 km from its center', 'planetary'),
   {
