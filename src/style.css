@@ -42,6 +42,7 @@ h1 { margin: 1rem 0 .7rem; font-size: clamp(2.6rem, 5.2vw, 4.5rem); line-height:
   .scene-meta { position: static; transform: none; order: 1; width: 100%; padding: .45rem .1rem .25rem; background: none; border-radius: 0; text-shadow: none; }
   h1 { margin: .35rem 0 .4rem; font-size: clamp(2rem, 8.5vw, 2.65rem); line-height: 1.02; }
   .scene-meta p { max-width: 100%; margin: 0; font-size: .84rem; line-height: 1.45; }.scale-chip { top: .7rem; right: .6rem; font-size: .68rem; }
+  .scene-wrap.lunar-view .scale-chip { display: none; }
   .controls { min-height: 78px; }.controls button { padding: 0 1rem; min-height: 46px; }.controls button span { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
