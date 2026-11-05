@@ -245,15 +245,22 @@ document.addEventListener('keydown', (event) => {
 });
 window.addEventListener('pagehide', () => {
   cancelAnimationFrame(frame);
-  for (const group of sceneGroups.values()) group.traverse((object) => {
-    const mesh = object as THREE.Mesh; mesh.geometry?.dispose?.();
-    const materials = mesh.material ? (Array.isArray(mesh.material) ? mesh.material : [mesh.material]) : [];
-    for (const material of materials) {
-      (material as THREE.Material & { map?: THREE.Texture }).map?.dispose(); material.dispose();
-    }
+  const disposedTextures = new Set<THREE.Texture>();
+  for (const group of sceneGroups.values()) {
+    group.traverse((object) => {
+      const mesh = object as THREE.Mesh; mesh.geometry?.dispose?.();
+      const materials = mesh.material ? (Array.isArray(mesh.material) ? mesh.material : [mesh.material]) : [];
+      for (const material of materials) {
+        const map = (material as THREE.Material & { map?: THREE.Texture }).map;
+        if (map && !disposedTextures.has(map)) { map.dispose(); disposedTextures.add(map); }
+        material.dispose();
+      }
+    });
     const sharedTextures = group.userData.sharedTextures as THREE.Texture[] | undefined;
-    sharedTextures?.forEach((texture) => texture.dispose());
-  });
+    sharedTextures?.forEach((texture) => {
+      if (!disposedTextures.has(texture)) { texture.dispose(); disposedTextures.add(texture); }
+    });
+  }
   renderer?.dispose();
 });
 
