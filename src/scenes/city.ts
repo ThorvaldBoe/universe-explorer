@@ -376,7 +376,7 @@ export const cityRenderer: SceneRenderer = {
       photoSphere.visible = true;
       group.userData.panoramaReady = true;
       (group.userData.sharedTextures as THREE.Texture[]).push(texture);
-    }, undefined, () => console.warn('The street panorama could not be loaded; using the modeled city fallback.'));
+    }, undefined, () => console.error('The street panorama failed to load from ' + cityStreetPanoramaUrl));
     group.userData.photoSphere = photoSphere;
     group.userData.lodDistanceKm = 0;
     return group;
