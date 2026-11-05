@@ -7,37 +7,33 @@ const EARTH_LATITUDE = Math.PI / 4;
 const MOON_SITE_LATITUDE = Math.PI / 4;
 const earthUp = [0, Math.cos(EARTH_LATITUDE), Math.sin(EARTH_LATITUDE)] as [number, number, number];
 const cityForward = [0, Math.sin(EARTH_LATITUDE), -Math.cos(EARTH_LATITUDE)] as [number, number, number];
-const earthSurface: [number, number, number] = [
-  0,
-  EARTH_RADIUS_KM * earthUp[1],
-  EARTH_RADIUS_KM * earthUp[2],
+// Keep one view direction for every Earth ascent stop: almost straight down, with enough
+// forward angle to keep the avenue visible beneath the camera.
+const earthViewAngle = 12 * Math.PI / 180;
+const earthViewDirection = [
+  cityForward[0] * Math.sin(earthViewAngle) - earthUp[0] * Math.cos(earthViewAngle),
+  cityForward[1] * Math.sin(earthViewAngle) - earthUp[1] * Math.cos(earthViewAngle),
+  cityForward[2] * Math.sin(earthViewAngle) - earthUp[2] * Math.cos(earthViewAngle),
+] as [number, number, number];
+const earthScreenUp = [
+  cityForward[0] * Math.cos(earthViewAngle) + earthUp[0] * Math.sin(earthViewAngle),
+  cityForward[1] * Math.cos(earthViewAngle) + earthUp[1] * Math.sin(earthViewAngle),
+  cityForward[2] * Math.cos(earthViewAngle) + earthUp[2] * Math.sin(earthViewAngle),
+] as [number, number, number];
+const earthSurface: [number, number, number] = [0, EARTH_RADIUS_KM * earthUp[1], EARTH_RADIUS_KM * earthUp[2]];
+const earthCamera = (altitudeKm: number): [number, number, number] => [
+  earthUp[0] * (EARTH_RADIUS_KM + altitudeKm),
+  earthUp[1] * (EARTH_RADIUS_KM + altitudeKm),
+  earthUp[2] * (EARTH_RADIUS_KM + altitudeKm),
 ];
-const streetPosition: [number, number, number] = [
-  earthSurface[0] + earthUp[0] * .0017,
-  earthSurface[1] + earthUp[1] * .0017,
-  earthSurface[2] + earthUp[2] * .0017,
-];
-const streetViewDirection: [number, number, number] = [
-  cityForward[0] - earthUp[0] * .003,
-  cityForward[1] - earthUp[1] * .003,
-  cityForward[2] - earthUp[2] * .003,
-];
-const streetLookAt: [number, number, number] = [
-  streetPosition[0] + streetViewDirection[0] * .2,
-  streetPosition[1] + streetViewDirection[1] * .2,
-  streetPosition[2] + streetViewDirection[2] * .2,
+const earthLookAt = (position: [number, number, number]): [number, number, number] => [
+  position[0] + earthViewDirection[0],
+  position[1] + earthViewDirection[1],
+  position[2] + earthViewDirection[2],
 ];
 const moonCenter: [number, number, number] = [MOON_DISTANCE_KM, 0, 0];
-const moonUp: [number, number, number] = [
-  -Math.cos(MOON_SITE_LATITUDE),
-  0,
-  Math.sin(MOON_SITE_LATITUDE),
-];
-const moonForward: [number, number, number] = [
-  -Math.sin(MOON_SITE_LATITUDE),
-  0,
-  -Math.cos(MOON_SITE_LATITUDE),
-];
+const moonUp: [number, number, number] = [-Math.cos(MOON_SITE_LATITUDE), 0, Math.sin(MOON_SITE_LATITUDE)];
+const moonForward: [number, number, number] = [-Math.sin(MOON_SITE_LATITUDE), 0, -Math.cos(MOON_SITE_LATITUDE)];
 const moonSurface: [number, number, number] = [
   moonCenter[0] + moonUp[0] * MOON_RADIUS_KM,
   moonCenter[1] + moonUp[1] * MOON_RADIUS_KM,
@@ -60,39 +56,34 @@ const lunarLookAt: [number, number, number] = [
   lunarCameraPosition[2] + lunarViewDirection[2] * 1000,
 ];
 
+function earthStop(
+  id: string, chapter: string, title: string, introduction: string,
+  altitudeKm: number, visibleWidthMeters: number, scaleLabel: string,
+  renderer: Stop['renderer'] = 'city',
+): Stop {
+  const cameraPositionKm = earthCamera(altitudeKm);
+  return {
+    id, chapter, title, introduction, visibleWidthMeters, scaleLabel, renderer,
+    provenance: renderer === 'planetary' ? 'observed' : 'illustrative',
+    cameraPositionKm,
+    focusPositionKm: [0, 0, 0],
+    lookAtPositionKm: earthLookAt(cameraPositionKm),
+    cameraUp: earthScreenUp,
+    cameraFovDegrees: 58,
+    ...(altitudeKm === 0 ? { scenePositionKm: earthSurface, sceneUp: earthUp } : {}),
+  };
+}
+
 export const stops: Stop[] = [
   {
-    id: 'street',
-    chapter: '01 · Earth',
-    title: 'On the street',
-    introduction: 'Stand on a city street. Look up, and begin the climb.',
-    visibleWidthMeters: 120,
-    scaleLabel: 'Street level · eye height 1.7 m',
-    renderer: 'city',
-    provenance: 'illustrative',
-    cameraPositionKm: streetPosition,
-    focusPositionKm: [0, 0, 0],
-    lookAtPositionKm: streetLookAt,
-    cameraUp: earthUp,
-    cameraFovDegrees: 48,
-    scenePositionKm: earthSurface,
-    sceneUp: earthUp,
+    ...earthStop('street', '01 · Earth', 'On the street', 'Look down the avenue. Then rise straight back, keeping your gaze fixed on the road below.', .0017, 120, 'Street level · eye height 1.7 m'),
+    cameraFovDegrees: 70,
   },
-  {
-    id: 'earth',
-    chapter: '02 · Earth and Moon',
-    title: 'Earth from orbit',
-    introduction: 'The city gives way to the curved Earth. The Moon is still nearly 384,400 km away.',
-    visibleWidthMeters: 30_000_000,
-    scaleLabel: 'Earth · 22,300 km from its center',
-    renderer: 'planetary',
-    provenance: 'observed',
-    cameraPositionKm: [0, 15_768.26, 15_768.26],
-    focusPositionKm: [0, 0, 0],
-    lookAtPositionKm: [0, 0, 0],
-    cameraUp: [1, 0, 0],
-    cameraFovDegrees: 42,
-  },
+  earthStop('neighborhood', '01 · Earth', 'Above the avenue', 'Street blocks begin to resolve into a neighborhood as the camera lifts above the rooftops.', .35, 1200, 'Neighborhood · 350 m above the surface'),
+  earthStop('city', '01 · Earth', 'The city below', 'The city grid and the surrounding landscape come into view, while the road remains beneath you.', 8, 30_000, 'City scale · 8 km above the surface'),
+  earthStop('atmosphere', '02 · Earth and Moon', 'Above the atmosphere', 'The blue edge of the atmosphere appears. The continent is still close enough to read.', 160, 800_000, 'Upper atmosphere · 160 km above the surface'),
+  earthStop('continents', '02 · Earth and Moon', 'A continental view', 'A curved horizon opens around the continent. Earth’s true scale begins to emerge.', 2200, 15_000_000, 'Low orbit · 2,200 km above the surface', 'planetary'),
+  earthStop('earth', '02 · Earth and Moon', 'Earth from orbit', 'The whole planet now fits in view. The Moon is still nearly 384,400 km away.', 22_300 - EARTH_RADIUS_KM, 30_000_000, 'Earth · 22,300 km from its center', 'planetary'),
   {
     id: 'moon',
     chapter: '03 · Moon',
