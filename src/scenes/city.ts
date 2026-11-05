@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { SceneRenderer } from './types';
 const cityMasterUrl = new URL('../assets/city-master.svg', import.meta.url).href;
-const cityStreetPanoramaUrl = new URL('../assets/city-street-panorama.svg', import.meta.url).href;
+const cityStreetPanoramaUrl = new URL('../assets/city-street-panorama.png', import.meta.url).href;
 import { createTexturePyramid, type TexturePyramidLevel } from './texture-pyramid';
 
 const EARTH_RADIUS_METERS = 6_371_000;
@@ -366,19 +366,17 @@ export const cityRenderer: SceneRenderer = {
     photoSphere.rotation.y = Math.PI;
     photoSphere.renderOrder = 2;
     group.add(photoSphere);
-    const panorama = new Image();
-    panorama.onload = () => {
-      if (group.userData.disposed) return;
-      const texture = new THREE.Texture(panorama);
+    photoSphere.visible = false;
+    new THREE.TextureLoader().load(cityStreetPanoramaUrl, (texture) => {
+      if (group.userData.disposed) { texture.dispose(); return; }
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.anisotropy = 8;
-      texture.needsUpdate = true;
       photoMaterial.map = texture;
       photoMaterial.needsUpdate = true;
+      photoSphere.visible = true;
+      group.userData.panoramaReady = true;
       (group.userData.sharedTextures as THREE.Texture[]).push(texture);
-    };
-    panorama.onerror = () => console.warn('The street panorama could not be loaded; using the modeled city fallback.');
-    panorama.src = cityStreetPanoramaUrl;
+    }, undefined, () => console.warn('The street panorama could not be loaded; using the modeled city fallback.'));
     group.userData.photoSphere = photoSphere;
     group.userData.lodDistanceKm = 0;
     return group;
@@ -391,7 +389,7 @@ export const cityRenderer: SceneRenderer = {
     const photoOpacity = 1 - THREE.MathUtils.smoothstep(altitudeKm, .04, .2);
     const photoSphere = group.userData.photoSphere as THREE.Mesh;
     (photoSphere.material as THREE.MeshBasicMaterial).opacity = photoOpacity;
-    photoSphere.visible = photoOpacity > .001;
+    photoSphere.visible = photoOpacity > .001 && Boolean(group.userData.panoramaReady);
     streetDetails.visible = altitudeKm > .04 && altitudeKm < .2;
     const levels = group.userData.tileLevels as THREE.Group[];
     levels.forEach((item, index) => { item.visible = index === level && altitudeKm >= .04; });
