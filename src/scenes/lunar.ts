@@ -93,7 +93,10 @@ function lunarSurface(frame: ReturnType<typeof siteFrame>, material: THREE.Mater
         .addScaledVector(frame.right, localRight)
         .addScaledVector(frame.forward, localForward);
       positions.push(point.x, point.y, point.z);
-      const longitude = (Math.atan2(point.z, -point.x) / (Math.PI * 2) + 1) % 1;\n      const latitude = Math.acos(THREE.MathUtils.clamp(point.y / MOON_RADIUS_KM, -1, 1)) / Math.PI;\n      uvs.push(longitude, latitude);\n      detailUvs.push(u * 8, (1 - v) * 8);
+      const longitude = (Math.atan2(point.z, -point.x) / (Math.PI * 2) + 1) % 1;
+      const latitude = Math.acos(THREE.MathUtils.clamp(point.y / MOON_RADIUS_KM, -1, 1)) / Math.PI;
+      uvs.push(longitude, latitude);
+      detailUvs.push(u * 8, (1 - v) * 8);
       if (row < segments && column < segments) {
         const a = row * (segments + 1) + column, b = a + segments + 1;
         indices.push(a, b, a + 1, b, b + 1, a + 1);
@@ -102,7 +105,8 @@ function lunarSurface(frame: ReturnType<typeof siteFrame>, material: THREE.Mater
   }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));\n  geometry.setAttribute('uv1', new THREE.Float32BufferAttribute(detailUvs, 2));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setAttribute('uv1', new THREE.Float32BufferAttribute(detailUvs, 2));
   geometry.setIndex(indices); geometry.computeVertexNormals();
   return new THREE.Mesh(geometry, material);
 }
