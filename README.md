@@ -38,6 +38,7 @@ Every pull request runs the production build and a headless Chromium review of t
 - Label content as observed/measured, reconstructed/modeled, illustrative, or speculative. In particular, identify the city and lunar landing scenes as illustrations, and distinguish them from observed planetary imagery.
 - Distinguish visible width, object diameter, altitude, orbital distance, and light-travel time. Use appropriate units and sensible precision.
 - Verify quantitative claims against authoritative sources. Record source links, asset origins, and license/attribution details alongside project content.
+- Treat the city map as AI-generated illustration. Build all of its zoom levels and tiles from its one master image; do not generate neighboring tiles independently.
 
 ## Engineering and accessibility standards
 
