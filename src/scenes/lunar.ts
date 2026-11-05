@@ -119,7 +119,9 @@ export const lunarRenderer: SceneRenderer = {
       group.add(rock);
     }
 
-    group.add(new THREE.DirectionalLight(0xfff1d6, 2.8));
+    const sunlight = new THREE.DirectionalLight(0xfff1d6, 2.8);
+    sunlight.position.copy(frame.up).multiplyScalar(5000);
+    group.add(sunlight);
     group.add(new THREE.AmbientLight(0x555d70, .32));
     group.userData.sharedTextures = [map, localMap];
     return group;
