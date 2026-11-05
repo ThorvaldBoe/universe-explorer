@@ -5,6 +5,7 @@ import type { RendererKind, Stop } from './types';
 import './style.css';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#universe')!;
+const sceneWrap = document.querySelector<HTMLElement>('.scene-wrap')!;
 const title = document.querySelector<HTMLElement>('#scene-title')!;
 const chapter = document.querySelector<HTMLElement>('#chapter')!;
 const copy = document.querySelector<HTMLElement>('#scene-copy')!;
@@ -71,6 +72,7 @@ function orientationAt(position: THREE.Vector3, target: THREE.Vector3, up: THREE
 
 function updateInterface(index: number) {
   const stop = stops[index];
+  sceneWrap.classList.toggle('lunar-view', stop.id === 'moon');
   title.textContent = stop.title;
   chapter.textContent = 'CHAPTER ' + stop.chapter.toUpperCase();
   copy.textContent = stop.introduction;
