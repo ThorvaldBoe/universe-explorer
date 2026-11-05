@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { SceneRenderer } from './types';
-import cityMasterUrl from '../assets/city-master.svg?url';
+const cityMasterUrl = new URL('../assets/city-master.svg', import.meta.url).href;
 import { createTexturePyramid, type TexturePyramidLevel } from './texture-pyramid';
 
 const EARTH_RADIUS_METERS = 6_371_000;
