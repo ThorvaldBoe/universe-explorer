@@ -127,10 +127,10 @@ export const lunarRenderer: SceneRenderer = {
 
     const frame = siteFrame(stop);
     const localMap = map.clone();
-    localMap.repeat.set(3, 3);
     localMap.needsUpdate = true;
+    const detailMap = makeLunarDetail();
     const ground = lunarSurface(frame, new THREE.MeshStandardMaterial({
-      map: localMap, bumpMap: localMap, bumpScale: .012, roughness: 1, metalness: 0, side: THREE.DoubleSide,
+      map: localMap, bumpMap: detailMap, bumpScale: .02, roughness: 1, metalness: 0, side: THREE.DoubleSide,
     }));
     group.add(ground);
 
