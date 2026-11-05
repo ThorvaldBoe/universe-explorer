@@ -99,6 +99,10 @@ function updateInterface(index: number) {
 function ensureScene(index: number) {
   if (sceneGroups.has(index)) return;
   const stop = stops[index];
+  if (stop.renderer === 'planetary') {
+    const sharedPlanet = [...sceneGroups.entries()].find(([existingIndex]) => stops[existingIndex].renderer === 'planetary')?.[1];
+    if (sharedPlanet) { sceneGroups.set(index, sharedPlanet); return; }
+  }
   const group = sceneRenderers[stop.renderer].create(stop);
   group.userData.worldPosition ??= group.position.clone();
   scene.add(group);
@@ -120,7 +124,8 @@ function navigate(requestedIndex: number) {
   const toLookAt = lookAtFor(stops[index]);
   const fromUp = camera.up.clone();
   const toUp = upFor(stops[index]);
-  const duration = reducedMotion ? .01 : (from === 0 && index === 1 ? 5.6 : 7.2);
+  const earthToEarth = from < stops.findIndex((stop) => stop.id === 'moon') && index < stops.findIndex((stop) => stop.id === 'moon');
+  const duration = reducedMotion ? .01 : earthToEarth ? 7.5 + Math.min(index, 4) * .35 : 7.2;
 
   journey = {
     from, to: index, start: performance.now(), duration: duration * 1000,
@@ -128,7 +133,7 @@ function navigate(requestedIndex: number) {
     fromQuaternion: camera.quaternion.clone(),
     toQuaternion: orientationAt(toPosition, toLookAt, toUp),
     fromTarget, toTarget, fromLookAt, toLookAt, fromUp, toUp,
-    earthArc: stops[from].id === 'street' && stops[index].id === 'earth',
+    earthArc: earthToEarth,
   };
   previous.disabled = true; next.disabled = true;
   progress.querySelectorAll('button').forEach((button) => { button.disabled = true; });
@@ -171,9 +176,8 @@ function updateJourney(now: number) {
   camera.up.copy(journey.fromUp.clone().lerp(journey.toUp, eased).normalize());
 
   if (journey.earthArc) {
-    const lookProgress = THREE.MathUtils.smoothstep(eased, 0, .24);
-    const lookTarget = journey.fromLookAt.clone().lerp(journey.toTarget, lookProgress);
-    camera.lookAt(lookTarget.clone().sub(cameraWorldPosition));
+    // Keep the original camera quaternion throughout the radial Earth ascent.
+    camera.quaternion.copy(journey.fromQuaternion);
   } else if (stops[journey.from].id === 'earth' && stops[journey.to].id === 'moon') {
     const landingViewProgress = THREE.MathUtils.smoothstep(eased, .84, 1);
     const lookTarget = journey.toTarget.clone().lerp(journey.toLookAt, landingViewProgress);
@@ -209,7 +213,7 @@ function init() {
     stars.frustumCulled = false; scene.add(stars);
     scene.add(new THREE.AmbientLight(0x8ea9d8, .3));
     ensureScene(0);
-    ensureScene(1);
+    ensureScene(stops.findIndex((stop) => stop.renderer === 'planetary'));
     window.addEventListener('resize', resize);
     render();
   } catch (error) {
@@ -235,7 +239,10 @@ function render() {
   const stars = scene.children.find((object) => object instanceof THREE.Points) as THREE.Points | undefined;
   if (stars) { stars.position.set(0, 0, 0); stars.quaternion.copy(camera.quaternion); stars.scale.setScalar(distance * 100); }
   const context = { cameraWorldPosition };
+  const updatedGroups = new Set<THREE.Group>();
   for (const [index, group] of sceneGroups) {
+    if (updatedGroups.has(group)) continue;
+    updatedGroups.add(group);
     group.position.copy(group.userData.worldPosition as THREE.Vector3).sub(cameraWorldPosition);
     sceneRenderers[stops[index].renderer].update?.(group, elapsed, context);
   }
@@ -252,7 +259,7 @@ document.addEventListener('keydown', (event) => {
 window.addEventListener('pagehide', () => {
   cancelAnimationFrame(frame);
   const disposedTextures = new Set<THREE.Texture>();
-  for (const group of sceneGroups.values()) {
+  for (const group of new Set(sceneGroups.values())) {
     group.userData.disposed = true;
     group.traverse((object) => {
       const mesh = object as THREE.Mesh; mesh.geometry?.dispose?.();
