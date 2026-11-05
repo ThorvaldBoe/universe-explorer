@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { SceneRenderer } from './types';
 const cityMasterUrl = new URL('../assets/city-master.svg', import.meta.url).href;
+const cityStreetPanoramaUrl = new URL('../assets/city-street-panorama.svg', import.meta.url).href;
 import { createTexturePyramid, type TexturePyramidLevel } from './texture-pyramid';
 
 const EARTH_RADIUS_METERS = 6_371_000;
@@ -180,7 +181,7 @@ function tileLevelGroup(level: TexturePyramidLevel) {
   for (const tile of level.tiles) {
     const centerX = (tile.x + .5) * tileWidth - MAP_SIZE_METERS / 2;
     const centerZ = MAP_SIZE_METERS / 2 - (tile.y + .5) * tileDepth;
-    const material = new THREE.MeshStandardMaterial({ map: tile.texture, roughness: 1, metalness: 0 });
+    const material = new THREE.MeshStandardMaterial({ map: tile.texture, roughness: 1, metalness: 0, transparent: true, opacity: 1, depthWrite: false });
     const mesh = new THREE.Mesh(curvedGeometry(tileWidth, tileDepth, centerX, centerZ), material);
     mesh.position.set(centerX, 0, centerZ);
     group.add(mesh);
@@ -359,6 +360,26 @@ export const cityRenderer: SceneRenderer = {
     }
     group.add(streetDetails);
     group.userData.streetDetails = streetDetails;
+
+    const photoMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide, transparent: true, opacity: 1, depthWrite: false, toneMapped: false });
+    const photoSphere = new THREE.Mesh(new THREE.SphereGeometry(2000, 96, 64), photoMaterial);
+    photoSphere.rotation.y = Math.PI;
+    photoSphere.renderOrder = 2;
+    group.add(photoSphere);
+    const panorama = new Image();
+    panorama.onload = () => {
+      if (group.userData.disposed) return;
+      const texture = new THREE.Texture(panorama);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = 8;
+      texture.needsUpdate = true;
+      photoMaterial.map = texture;
+      photoMaterial.needsUpdate = true;
+      (group.userData.sharedTextures as THREE.Texture[]).push(texture);
+    };
+    panorama.onerror = () => console.warn('The street panorama could not be loaded; using the modeled city fallback.');
+    panorama.src = cityStreetPanoramaUrl;
+    group.userData.photoSphere = photoSphere;
     group.userData.lodDistanceKm = 0;
     return group;
   },
@@ -367,11 +388,26 @@ export const cityRenderer: SceneRenderer = {
     const altitudeKm = context ? context.cameraWorldPosition.distanceTo(cityCenter) : 0;
     const level = altitudeKm < .5 ? 0 : altitudeKm < 2.5 ? 1 : 2;
     const streetDetails = group.userData.streetDetails as THREE.Group;
-    streetDetails.visible = altitudeKm < 4;
+    const photoOpacity = 1 - THREE.MathUtils.smoothstep(altitudeKm, .18, .5);
+    const photoSphere = group.userData.photoSphere as THREE.Mesh;
+    (photoSphere.material as THREE.MeshBasicMaterial).opacity = photoOpacity;
+    photoSphere.visible = photoOpacity > .001;
+    streetDetails.visible = altitudeKm > .16 && altitudeKm < 4;
     if (group.userData.lodDistanceKm !== level) {
       const levels = group.userData.tileLevels as THREE.Group[];
       levels.forEach((item, index) => { item.visible = index === level; });
       group.userData.lodDistanceKm = level;
+    }
+    const tileOpacity = THREE.MathUtils.smoothstep(altitudeKm, .16, .5);
+    const levels = group.userData.tileLevels as THREE.Group[];
+    for (const tileLevel of levels) {
+      tileLevel.traverse((object) => {
+        const mesh = object as THREE.Mesh;
+        if (!mesh.material) return;
+        for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+          (material as THREE.MeshStandardMaterial).opacity = tileOpacity;
+        }
+      });
     }
   },
 };
