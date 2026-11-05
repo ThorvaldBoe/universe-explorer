@@ -43,6 +43,33 @@ function makeLunarMap() {
   return texture;
 }
 
+function makeLunarDetail() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512; canvas.height = 512;
+  const context = canvas.getContext('2d')!;
+  context.fillStyle = '#808080';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  let seed = 1984;
+  const random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  for (let i = 0; i < 420; i++) {
+    const x = random() * canvas.width, y = random() * canvas.height;
+    const radius = 2 + random() * 14;
+    const crater = context.createRadialGradient(x, y, radius * .15, x, y, radius);
+    crater.addColorStop(0, '#929292');
+    crater.addColorStop(.68, '#777777');
+    crater.addColorStop(.86, '#a1a1a1');
+    crater.addColorStop(1, '#808080');
+    context.fillStyle = crater;
+    context.beginPath(); context.arc(x, y, radius, 0, Math.PI * 2); context.fill();
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.anisotropy = 8;
+  texture.channel = 1;
+  return texture;
+}
+
 function siteFrame(stop: Parameters<SceneRenderer['create']>[0]) {
   const up = new THREE.Vector3(...(stop.sceneUp ?? [-1, 0, 0])).normalize();
   const right = new THREE.Vector3(0, 1, 0);
@@ -52,7 +79,7 @@ function siteFrame(stop: Parameters<SceneRenderer['create']>[0]) {
 
 function lunarSurface(frame: ReturnType<typeof siteFrame>, material: THREE.Material) {
   const size = 12, segments = 160;
-  const positions: number[] = [], uvs: number[] = [], indices: number[] = [];
+  const positions: number[] = [], uvs: number[] = [], detailUvs: number[] = [], indices: number[] = [];
   for (let row = 0; row <= segments; row++) {
     const v = row / segments;
     const localForward = (v - .5) * size;
@@ -66,7 +93,7 @@ function lunarSurface(frame: ReturnType<typeof siteFrame>, material: THREE.Mater
         .addScaledVector(frame.right, localRight)
         .addScaledVector(frame.forward, localForward);
       positions.push(point.x, point.y, point.z);
-      uvs.push(u, 1 - v);
+      const longitude = (Math.atan2(point.z, -point.x) / (Math.PI * 2) + 1) % 1;\n      const latitude = Math.acos(THREE.MathUtils.clamp(point.y / MOON_RADIUS_KM, -1, 1)) / Math.PI;\n      uvs.push(longitude, latitude);\n      detailUvs.push(u * 8, (1 - v) * 8);
       if (row < segments && column < segments) {
         const a = row * (segments + 1) + column, b = a + segments + 1;
         indices.push(a, b, a + 1, b, b + 1, a + 1);
@@ -75,7 +102,7 @@ function lunarSurface(frame: ReturnType<typeof siteFrame>, material: THREE.Mater
   }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));\n  geometry.setAttribute('uv1', new THREE.Float32BufferAttribute(detailUvs, 2));
   geometry.setIndex(indices); geometry.computeVertexNormals();
   return new THREE.Mesh(geometry, material);
 }
@@ -119,11 +146,11 @@ export const lunarRenderer: SceneRenderer = {
       group.add(rock);
     }
 
-    const sunlight = new THREE.DirectionalLight(0xfff1d6, 2.8);
+    const sunlight = new THREE.DirectionalLight(0xe4e7ef, 1.9);
     sunlight.position.copy(frame.up).multiplyScalar(5000);
     group.add(sunlight);
-    group.add(new THREE.AmbientLight(0x555d70, .32));
-    group.userData.sharedTextures = [map, localMap];
+    group.add(new THREE.AmbientLight(0x606879, .45));
+    group.userData.sharedTextures = [map, localMap, detailMap];
     return group;
   },
 };
