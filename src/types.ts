@@ -1,5 +1,7 @@
 export type Provenance = 'observed' | 'reconstructed' | 'illustrative' | 'speculative';
-export type RendererKind = 'planetary' | 'stellar' | 'galactic' | 'cosmological';
+export type RendererKind = 'city' | 'planetary' | 'stellar' | 'lunar' | 'galactic' | 'cosmological';
+
+export type Vector3Tuple = [number, number, number];
 
 export interface Stop {
   id: string;
@@ -11,4 +13,13 @@ export interface Stop {
   scaleLabel: string;
   renderer: RendererKind;
   provenance: Provenance;
+  /** Camera and scene anchors use kilometers in an Earth-centered frame. */
+  cameraPositionKm?: Vector3Tuple;
+  focusPositionKm?: Vector3Tuple;
+  lookAtPositionKm?: Vector3Tuple;
+  cameraUp?: Vector3Tuple;
+  cameraFovDegrees?: number;
+  scenePositionKm?: Vector3Tuple;
+  sceneUp?: Vector3Tuple;
+  sceneForward?: Vector3Tuple;
 }
