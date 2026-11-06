@@ -67,6 +67,9 @@ try {
   }
   await videoPage.getByRole('heading', { name: stops[stops.length - 1] }).waitFor({ timeout: 20000 });
   await delay(800);
+  await videoPage.getByRole('button', { name: /Return to Earth/ }).click();
+  await videoPage.getByRole('heading', { name: stops[0] }).waitFor({ timeout: 20000 });
+  await delay(500);
   const video = videoPage.video();
   await videoPage.close();
   await videoContext.close();
