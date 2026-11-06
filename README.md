@@ -2,6 +2,8 @@
 
 A browser-based journey from Earth to the observable universe. See [initial-spec.md](initial-spec.md) for product and scientific goals, and [Visual journey and imagery principles](docs/visual-journey-and-imagery.md) for production lessons from the Earth-to-Moon pilot.
 
+The next planned chapter is documented in [Solar System storyboard](docs/solar-system-storyboard.md), including the Earth–Moon scale handoff and the first Solar System frames.
+
 ## Live preview
 
 [Open Universe Explorer](https://thorvaldboe.github.io/universe-explorer/)
