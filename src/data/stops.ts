@@ -2,6 +2,7 @@ import type { Stop } from '../types';
 import {
   ASTRONOMICAL_UNIT_KM, EARTH_MOON_DISTANCE_KM, EARTH_RADIUS_KM, MOON_RADIUS_KM,
 } from './solar-system';
+import { LIGHT_YEAR_METERS, SUN_ANCHOR_KM } from './stellar-neighborhood';
 
 const EARTH_LATITUDE = Math.PI / 4;
 const MOON_SITE_LATITUDE = Math.PI / 4;
@@ -60,6 +61,24 @@ function solarStop(
     scaleLabel: `View width · ${scaleLabel}`,
     renderer: 'solar-system', provenance: id === 'oort-cloud' ? 'speculative' : 'illustrative',
     cameraPositionKm: camera, focusPositionKm: focus, lookAtPositionKm: focus,
+    cameraUp: [0, 1, 0], cameraFovDegrees: 45,
+  };
+}
+
+function stellarStop(
+  id: string, title: string, introduction: string,
+  visibleWidthLy: number, scaleLabel: string,
+  provenance: Stop['provenance'],
+): Stop {
+  return {
+    id, chapter: '05 · Stars', title, introduction,
+    visibleWidthMeters: visibleWidthLy * LIGHT_YEAR_METERS,
+    cameraFrameWidthMeters: visibleWidthLy * LIGHT_YEAR_METERS,
+    scaleLabel: `View width · ${scaleLabel}`,
+    renderer: 'stellar', provenance,
+    cameraPositionKm: [...SUN_ANCHOR_KM],
+    focusPositionKm: [...SUN_ANCHOR_KM],
+    lookAtPositionKm: [...SUN_ANCHOR_KM],
     cameraUp: [0, 1, 0], cameraFovDegrees: 45,
   };
 }
@@ -137,5 +156,20 @@ export const stops: Stop[] = [
     'oort-cloud', 'The Oort Cloud',
     'A diffuse, hypothetical reservoir of distant comets surrounds the planetary region. It has not been directly observed; the cloud is shown as a speculative illustration, not a measured shell.',
     28_382_100_000_000, '3 light-years', [-ASTRONOMICAL_UNIT_KM, 0, 0], [-ASTRONOMICAL_UNIT_KM, 0, 1],
+  ),
+  stellarStop(
+    'nearest-stars', 'The nearest stars',
+    'Proxima Centauri is about 4.25 light-years away; the Alpha Centauri A/B system lies about 4.40 light-years away. These neighboring stars are separated by vast interstellar distances.',
+    10, '10 light-years', 'observed',
+  ),
+  stellarStop(
+    'stellar-neighborhood', 'The stellar neighborhood',
+    'Sirius, Procyon, Vega and other catalogued stars surround the Sun across dozens of light-years. The view uses measured positions; every star marker is enlarged for visibility.',
+    100, '100 light-years', 'observed',
+  ),
+  stellarStop(
+    'local-galactic-region', 'The local galactic region',
+    'The Sun lies within the Orion Spur of the Milky Way. This reconstructed regional view suggests the scale of stellar density and interstellar clouds; it is not a measured star-by-star map.',
+    10_000, '10,000 light-years', 'reconstructed',
   ),
 ];

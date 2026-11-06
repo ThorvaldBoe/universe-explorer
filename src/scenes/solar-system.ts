@@ -226,6 +226,7 @@ export const solarSystemRenderer: SceneRenderer = {
   },
   update(group, _elapsed, context?: SceneUpdateContext) {
     if (!context) return;
+    group.visible = context.activeRenderer === 'solar-system';
     const widthKm = context.visibleWidthKm ?? 1_000_000;
     const worldPerPixel = widthKm / Math.max(1, context.viewportWidth ?? 1280);
     const labelWidth = 110 * worldPerPixel;
