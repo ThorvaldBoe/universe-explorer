@@ -1,6 +1,6 @@
 # Universe Explorer
 
-A browser-based journey from Earth to the observable universe. See [initial-spec.md](initial-spec.md) for product and scientific goals.
+A browser-based journey from Earth to the observable universe. See [initial-spec.md](initial-spec.md) for product and scientific goals, and [Visual journey and imagery principles](docs/visual-journey-and-imagery.md) for production lessons from the Earth-to-Moon pilot.
 
 ## Live preview
 
