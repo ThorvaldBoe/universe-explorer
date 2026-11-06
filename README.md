@@ -52,6 +52,7 @@ Every pull request runs the production build and a headless Chromium review of e
 - Use TypeScript, Vite, and Three.js for the app foundation; keep interface controls in semantic HTML and CSS.
 - Make transitions deterministic, skippable, and reversible through journey navigation. Interpolate logarithmic scale and blend scene levels of detail instead of linearly scaling raw astronomical distances.
 - Support desktop and mobile layouts, keyboard and touch controls, readable focus states, and `prefers-reduced-motion`.
+- Show explanatory scene text by default; keep a touch-friendly, futuristic toggle available to hide or restore it, and remember the visitor’s preference.
 - Provide useful loading and WebGL failure states and a readable text fallback. Never leave the visitor with a blank canvas and no explanation.
 - Load assets only as needed, dispose of unused GPU resources, and adapt rendering quality for device capability.
 

@@ -12,7 +12,19 @@
     <main class="app-shell">
       <header class="topbar">
         <a class="wordmark" href="./" aria-label="Universe Explorer home"><span class="mark">✳</span> UNIVERSE EXPLORER</a>
-        <span class="topbar-note">A journey through space and scale</span>
+        <div class="topbar-actions">
+          <span class="topbar-note">A journey through space and scale</span>
+          <button id="text-toggle" class="text-toggle" type="button" aria-pressed="true" aria-controls="scene-meta" aria-label="Hide explanatory text">
+            <svg class="text-toggle-glyph" viewBox="0 0 28 28" aria-hidden="true">
+              <ellipse cx="14" cy="14" rx="10.5" ry="4.2" transform="rotate(-35 14 14)" />
+              <ellipse cx="14" cy="14" rx="10.5" ry="4.2" transform="rotate(35 14 14)" />
+              <circle cx="14" cy="14" r="2.2" />
+              <path d="M14 1.5v4M14 22.5v4M1.5 14h4M22.5 14h4" />
+            </svg>
+            <span class="text-toggle-label">TEXT</span>
+            <span id="text-toggle-state" class="text-toggle-state">ON</span>
+          </button>
+        </div>
       </header>
       <section class="stage" aria-labelledby="scene-title">
         <div class="scene-wrap">
@@ -20,7 +32,7 @@
           <div id="fallback" class="fallback" hidden>3D effects are unavailable in this browser. The scale artwork and scene descriptions are still available.</div>
           <div class="scale-chip"><span class="pulse"></span><span id="scale-readout" aria-live="polite">View width · 1 m</span></div>
         </div>
-        <div class="scene-meta">
+        <div class="scene-meta" id="scene-meta">
           <span class="eyebrow" id="chapter">CHAPTER 01 · EARTH</span>
           <h1 id="scene-title">Home</h1>
           <p id="scene-copy">A blue world, suspended in the dark. This is where every journey begins.</p>

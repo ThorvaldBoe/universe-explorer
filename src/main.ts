@@ -16,6 +16,23 @@ const previous = document.querySelector<HTMLButtonElement>('#previous')!;
 const next = document.querySelector<HTMLButtonElement>('#next')!;
 const progress = document.querySelector<HTMLElement>('#progress')!;
 const fallback = document.querySelector<HTMLElement>('#fallback')!;
+const textToggle = document.querySelector<HTMLButtonElement>('#text-toggle')!;
+const textToggleState = document.querySelector<HTMLElement>('#text-toggle-state')!;
+const TEXT_VISIBILITY_KEY = 'universe-explorer:text-visible';
+let textVisible = true;
+try { textVisible = localStorage.getItem(TEXT_VISIBILITY_KEY) !== 'false'; } catch { /* Storage may be disabled. */ }
+function updateTextVisibility() {
+  document.body.classList.toggle('explanations-hidden', !textVisible);
+  textToggle.setAttribute('aria-pressed', String(textVisible));
+  textToggle.setAttribute('aria-label', textVisible ? 'Hide explanatory text' : 'Show explanatory text');
+  textToggleState.textContent = textVisible ? 'ON' : 'OFF';
+}
+textToggle.addEventListener('click', () => {
+  textVisible = !textVisible;
+  try { localStorage.setItem(TEXT_VISIBILITY_KEY, String(textVisible)); } catch { /* The toggle still works for this visit. */ }
+  updateTextVisibility();
+});
+updateTextVisibility();
 const EARTH_RADIUS_KM = 6371;
 const AU_KM = 149_597_870.7;
 const LIGHT_YEAR_KM = 9.4607e12;
