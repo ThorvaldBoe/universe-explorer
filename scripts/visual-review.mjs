@@ -38,6 +38,13 @@ try {
     });
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
     await page.screenshot({ path: `${artifactDir}/${viewport.name}-01-${stops[0].toLowerCase().replaceAll(' ', '-')}.png`, fullPage: true, timeout: 90000 });
+    const hideText = page.getByRole('button', { name: 'Hide explanatory text' });
+    if (await hideText.getAttribute('aria-pressed') !== 'true') throw new Error('Explanatory text should be on by default.');
+    await hideText.click();
+    await page.locator('#scene-meta').waitFor({ state: 'hidden' });
+    await page.screenshot({ path: `${artifactDir}/${viewport.name}-text-hidden.png`, fullPage: true, timeout: 90000 });
+    await page.getByRole('button', { name: 'Show explanatory text' }).click();
+    await page.locator('#scene-meta').waitFor({ state: 'visible' });
     for (let i = 1; i < scenesForViewport.length; i++) {
       await page.getByRole('button', { name: `Go to ${scenesForViewport[i]}` }).click();
       await page.getByRole('heading', { name: scenesForViewport[i] }).waitFor();
