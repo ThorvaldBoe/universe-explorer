@@ -185,6 +185,32 @@ export class DeepZoomArtwork {
     this.showEarthTransition(earthZoomFrames.length - 1, targetEarthFrameIndex, (p - handoff) / (1 - handoff));
   }
 
+  /** Pull back from the lunar surface into the scale-accurate 3D Earth–Moon scene. */
+  showLunarDepartureToSystem(progress: number) {
+    const p = clamp01(progress);
+    const clear = smoothstep(.7, 1, p);
+    const image = assetUrl('moon-surface-earth-view.png');
+    this.setImage(this.moonSky, image, 'moonSky');
+    this.setImage(this.moonGround, image, 'moonGround');
+    this.root.style.background = '#000';
+    this.moonSky.style.clipPath = 'inset(0 0 56% 0)';
+    this.moonGround.style.clipPath = 'inset(43% 0 0 0)';
+    this.moonGround.style.transformOrigin = 'center bottom';
+    this.transform(this.back, 1, 0);
+    this.transform(this.front, 1, 0);
+    // Earth begins at its lunar-art size and recedes steadily to its 800,000 km frame size.
+    this.transform(this.moonSky, 1 - .3 * p, 1 - clear, -18 * p, -8 * p);
+    this.transform(this.moonGround, 1 - .42 * smoothstep(.05, .68, p), 1 - smoothstep(.02, .62, p));
+  }
+
+  showSceneOnly() {
+    this.transform(this.back, 1, 0);
+    this.transform(this.front, 1, 0);
+    this.transform(this.moonSky, 1, 0);
+    this.transform(this.moonGround, 1, 0);
+    this.root.style.background = 'transparent';
+  }
+
   frameIndexAt(fromIndex: number, toIndex: number, progress: number) {
     return THREE.MathUtils.clamp(fromIndex + (toIndex - fromIndex) * clamp01(progress), 0, earthZoomFrames.length - 1);
   }
