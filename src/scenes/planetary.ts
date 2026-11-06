@@ -112,9 +112,10 @@ export const planetaryRenderer: SceneRenderer = {
   },
   update(group, elapsed, context) {
     if (group.userData.stopId === 'earth') {
+      group.visible = context?.activeRenderer !== 'solar-system';
       group.rotation.y = elapsed * .004;
       const altitudeKm = context ? context.cameraWorldPosition.length() - EARTH_RADIUS_KM : 0;
-      const visible = altitudeKm >= 80;
+      const visible = altitudeKm >= 80 && context?.activeRenderer !== 'solar-system';
       (group.userData.earthVisuals as THREE.Object3D[]).forEach((visual) => { visual.visible = visible; });
     }
   },

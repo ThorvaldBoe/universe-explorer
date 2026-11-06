@@ -1,5 +1,5 @@
 export type Provenance = 'observed' | 'reconstructed' | 'illustrative' | 'speculative';
-export type RendererKind = 'city' | 'planetary' | 'stellar' | 'lunar' | 'galactic' | 'cosmological';
+export type RendererKind = 'city' | 'planetary' | 'solar-system' | 'stellar' | 'lunar' | 'galactic' | 'cosmological';
 
 export type Vector3Tuple = [number, number, number];
 
@@ -10,6 +10,8 @@ export interface Stop {
   introduction: string;
   /** Approximate conceptual framing width; not a raw renderer coordinate. */
   visibleWidthMeters: number;
+  /** Horizontal scene width kept in frame across viewport sizes. */
+  cameraFrameWidthMeters?: number;
   scaleLabel: string;
   renderer: RendererKind;
   provenance: Provenance;

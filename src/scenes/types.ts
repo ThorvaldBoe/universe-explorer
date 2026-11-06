@@ -1,7 +1,12 @@
 import type { Group, Vector3 } from 'three';
 import type { RendererKind, Stop } from '../types';
 
-export interface SceneUpdateContext { cameraWorldPosition: Vector3; }
+export interface SceneUpdateContext {
+  cameraWorldPosition: Vector3;
+  visibleWidthKm?: number;
+  viewportWidth?: number;
+  activeRenderer?: RendererKind;
+}
 
 export interface SceneRenderer {
   kind: RendererKind;

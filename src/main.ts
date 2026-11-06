@@ -11,6 +11,7 @@ const artwork = new DeepZoomArtwork(sceneWrap);
 const title = document.querySelector<HTMLElement>('#scene-title')!;
 const chapter = document.querySelector<HTMLElement>('#chapter')!;
 const copy = document.querySelector<HTMLElement>('#scene-copy')!;
+const provenance = document.querySelector<HTMLElement>('#scene-provenance')!;
 const scale = document.querySelector<HTMLElement>('#scale-readout')!;
 const previous = document.querySelector<HTMLButtonElement>('#previous')!;
 const next = document.querySelector<HTMLButtonElement>('#next')!;
@@ -80,7 +81,20 @@ starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3
 function vector(tuple?: [number, number, number], fallback: [number, number, number] = [0, 0, 0]) {
   return new THREE.Vector3(...(tuple ?? fallback));
 }
-function positionFor(index: number) { return vector(stops[index].cameraPositionKm); }
+function positionFor(index: number) {
+  const stop = stops[index];
+  const position = vector(stop.cameraPositionKm);
+  if (!stop.cameraFrameWidthMeters || !stop.focusPositionKm) return position;
+  const focus = vector(stop.focusPositionKm);
+  const fov = (stop.cameraFovDegrees ?? 48) * Math.PI / 180;
+  const aspect = camera?.aspect ?? window.innerWidth / Math.max(1, window.innerHeight);
+  const frameWidthKm = stop.cameraFrameWidthMeters / 1000;
+  const distance = frameWidthKm / (2 * Math.tan(fov / 2) * aspect);
+  const offset = position.sub(focus);
+  const zMagnitude = Math.sqrt(Math.max(0, distance ** 2 - offset.x ** 2 - offset.y ** 2));
+  offset.z = Math.sign(offset.z || 1) * zMagnitude;
+  return focus.add(offset);
+}
 function targetFor(index: number) { return vector(stops[index].focusPositionKm); }
 function lookAtFor(stop: Stop) { return vector(stop.lookAtPositionKm, stop.focusPositionKm); }
 function upFor(stop: Stop) { return vector(stop.cameraUp, [0, 1, 0]).normalize(); }
@@ -98,7 +112,11 @@ function updateInterface(index: number) {
   title.textContent = stop.title;
   chapter.textContent = 'CHAPTER ' + stop.chapter.toUpperCase();
   copy.textContent = stop.introduction;
-  scale.textContent = index < earthZoomArtIndexByStop.length
+  provenance.hidden = stop.renderer !== 'solar-system';
+  provenance.textContent = stop.provenance === 'speculative'
+    ? 'Speculative · not directly observed'
+    : 'Illustrative scene · geometry anchored to measured values';
+  scale.textContent = earthZoomArtIndexByStop[index] !== undefined
     ? artwork.labelAt(earthZoomArtIndexByStop[index])
     : stop.scaleLabel;
   previous.disabled = index === 0 || Boolean(journey) || preparingJourney;
@@ -125,6 +143,10 @@ function updateJourneyCopy(index: number) {
   title.textContent = stop.title;
   chapter.textContent = 'CHAPTER ' + stop.chapter.toUpperCase();
   copy.textContent = stop.introduction;
+  provenance.hidden = stop.renderer !== 'solar-system';
+  provenance.textContent = stop.provenance === 'speculative'
+    ? 'Speculative · not directly observed'
+    : 'Illustrative scene · geometry anchored to measured values';
 }
 
 function ensureScene(index: number) {
@@ -135,6 +157,10 @@ function ensureScene(index: number) {
   if (stop.renderer === 'planetary') {
     const sharedPlanet = [...sceneGroups.entries()].find(([existingIndex]) => stops[existingIndex].renderer === 'planetary')?.[1];
     if (sharedPlanet) { sceneGroups.set(index, sharedPlanet); return; }
+  }
+  if (stop.renderer === 'solar-system') {
+    const sharedSolar = [...sceneGroups.entries()].find(([existingIndex]) => stops[existingIndex].renderer === 'solar-system')?.[1];
+    if (sharedSolar) { sceneGroups.set(index, sharedSolar); return; }
   }
   const group = sceneRenderer.create(stop);
   group.userData.worldPosition ??= group.position.clone();
@@ -191,6 +217,13 @@ function formatDistance(distanceKm: number, reference = 'Earth center') {
   return (distanceKm / LIGHT_YEAR_KM).toPrecision(3) + ' light-years from Earth';
 }
 
+function formatVisibleWidth(widthKm: number) {
+  if (widthKm < 1_000_000) return Math.round(widthKm).toLocaleString() + ' km';
+  if (widthKm < 1_000_000_000) return (widthKm / 1_000_000).toLocaleString(undefined, { maximumSignificantDigits: 3 }) + ' million km';
+  if (widthKm < 1_000_000_000_000) return (widthKm / 1_000_000_000).toLocaleString(undefined, { maximumSignificantDigits: 3 }) + ' billion km';
+  return (widthKm / LIGHT_YEAR_KM).toLocaleString(undefined, { maximumSignificantDigits: 3 }) + ' light-years';
+}
+
 function finishJourney() {
   if (!journey) return;
   active = journey.to;
@@ -208,23 +241,39 @@ function updateJourney(now: number) {
   if (!journey) return;
   const raw = Math.min(1, (now - journey.start) / journey.duration);
   const eased = journey.earthArc ? raw ** 2.4 : raw * raw * (3 - 2 * raw);
+  const lunarToEarthMoon = stops[journey.from].id === 'moon' && stops[journey.to].id === 'earth-moon';
   if (stops[journey.to].id === 'moon') {
     artwork.showLunarArrival(journey.fromArtIndex, eased);
     if (eased >= .56) updateJourneyCopy(journey.to);
+  } else if (lunarToEarthMoon) {
+    artwork.showLunarDepartureToSystem(eased);
+    if (eased >= .44) updateJourneyCopy(journey.to);
   } else if (stops[journey.from].id === 'moon') {
     artwork.showLunarDeparture(journey.toArtIndex, eased);
     if (eased >= .44) updateJourneyCopy(journey.to);
   } else if (journey.earthArc) {
     artwork.showEarthTransition(journey.fromArtIndex, journey.toArtIndex, eased);
   }
-  const fromDistance = journey.fromPosition.distanceTo(journey.fromTarget);
-  const toDistance = journey.toPosition.distanceTo(journey.toTarget);
-  const distance = Math.exp(Math.log(fromDistance) + (Math.log(toDistance) - Math.log(fromDistance)) * eased);
-  const target = journey.fromTarget.clone().lerp(journey.toTarget, eased);
-  const startDirection = journey.fromPosition.clone().sub(journey.fromTarget).normalize();
-  const endDirection = journey.toPosition.clone().sub(journey.toTarget).normalize();
-  const direction = startDirection.lerp(endDirection, eased).normalize();
-  cameraWorldPosition.copy(target).addScaledVector(direction, distance);
+  if (lunarToEarthMoon) {
+    // Rise away from the near-side surface. The vertical retreat makes both bodies recede;
+    // easing the lateral move to the pair's midpoint preserves their 384,400 km separation.
+    const lateral = eased * eased;
+    const rise = eased ** .65;
+    cameraWorldPosition.set(
+      journey.fromPosition.x + (journey.toPosition.x - journey.fromPosition.x) * lateral,
+      journey.fromPosition.y + (journey.toPosition.y - journey.fromPosition.y) * rise,
+      journey.fromPosition.z + (journey.toPosition.z - journey.fromPosition.z) * rise,
+    );
+  } else {
+    const fromDistance = journey.fromPosition.distanceTo(journey.fromTarget);
+    const toDistance = journey.toPosition.distanceTo(journey.toTarget);
+    const distance = Math.exp(Math.log(fromDistance) + (Math.log(toDistance) - Math.log(fromDistance)) * eased);
+    const target = journey.fromTarget.clone().lerp(journey.toTarget, eased);
+    const startDirection = journey.fromPosition.clone().sub(journey.fromTarget).normalize();
+    const endDirection = journey.toPosition.clone().sub(journey.toTarget).normalize();
+    const direction = startDirection.lerp(endDirection, eased).normalize();
+    cameraWorldPosition.copy(target).addScaledVector(direction, distance);
+  }
   camera.position.set(0, 0, 0);
   camera.up.copy(journey.fromUp.clone().lerp(journey.toUp, eased).normalize());
 
@@ -249,6 +298,11 @@ function updateJourney(now: number) {
     scale.textContent = eased < .5
       ? formatDistance(cameraWorldPosition.length(), 'Earth center')
       : formatDistance(cameraWorldPosition.distanceTo(journey.toTarget), 'Moon center');
+  } else if (lunarToEarthMoon || stops[journey.from].renderer === 'solar-system' || stops[journey.to].renderer === 'solar-system') {
+    const fromWidth = stops[journey.from].visibleWidthMeters / 1000;
+    const toWidth = stops[journey.to].visibleWidthMeters / 1000;
+    const width = Math.exp(Math.log(fromWidth) + (Math.log(toWidth) - Math.log(fromWidth)) * eased);
+    scale.textContent = 'View width · ' + formatVisibleWidth(width);
   } else if (stops[journey.from].id === 'moon') {
     scale.textContent = eased < .5
       ? formatDistance(cameraWorldPosition.distanceTo(journey.fromTarget), 'Moon center')
@@ -292,6 +346,11 @@ function resize() {
   renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
   camera.aspect = canvas.clientWidth / canvas.clientHeight;
   camera.updateProjectionMatrix();
+  if (journey) journey.toPosition.copy(positionFor(journey.to));
+  else {
+    cameraWorldPosition.copy(positionFor(active));
+    camera.quaternion.copy(orientationAt(cameraWorldPosition, lookAtFor(stops[active]), upFor(stops[active])));
+  }
 }
 
 function render() {
@@ -301,13 +360,17 @@ function render() {
   updateJourney(performance.now());
   if (!journey) {
     if (stops[active].id === 'moon') artwork.showLunarArrival(earthZoomArtIndexByStop.at(-1)!, 1);
-    else artwork.showEarthFrame(earthZoomArtIndexByStop[active]);
+    else if (earthZoomArtIndexByStop[active] !== undefined) artwork.showEarthFrame(earthZoomArtIndexByStop[active]);
+    else artwork.showSceneOnly();
   }
   const distance = Math.max(EARTH_RADIUS_KM, cameraWorldPosition.length());
   if (starMaterial) starMaterial.opacity = .72 * THREE.MathUtils.smoothstep(distance, EARTH_RADIUS_KM * 1.5, EARTH_RADIUS_KM * 12);
   const stars = scene.children.find((object) => object instanceof THREE.Points) as THREE.Points | undefined;
   if (stars) { stars.position.set(0, 0, 0); stars.quaternion.copy(camera.quaternion); stars.scale.setScalar(distance * 100); }
-  const context = { cameraWorldPosition };
+  const visibleWidthKm = journey
+    ? Math.exp(Math.log(stops[journey.from].visibleWidthMeters / 1000) + (Math.log(stops[journey.to].visibleWidthMeters / 1000) - Math.log(stops[journey.from].visibleWidthMeters / 1000)) * Math.min(1, (performance.now() - journey.start) / journey.duration))
+    : stops[active].visibleWidthMeters / 1000;
+  const context = { cameraWorldPosition, visibleWidthKm, viewportWidth: canvas.clientWidth, activeRenderer: journey ? stops[journey.to].renderer : stops[active].renderer };
   const updatedGroups = new Set<THREE.Group>();
   for (const [index, group] of sceneGroups) {
     if (updatedGroups.has(group)) continue;

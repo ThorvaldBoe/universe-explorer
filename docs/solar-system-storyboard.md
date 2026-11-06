@@ -1,6 +1,8 @@
 # Solar System storyboard
 
-This document plans the next journey chapter after the Earth-to-Moon pilot. It defines the required scenes and the scale handoffs before any new artwork or rendering is produced.
+This document defines the next journey chapter after the Earth-to-Moon pilot, the required scenes, and the scale handoffs.
+
+The first implementation is in `src/scenes/solar-system.ts` and `src/data/stops.ts`. It uses one shared, kilometer-based Solar System scene for the Earth–Moon frame and four destination stops. The Moon handoff starts at the same near-side surface camera position as the lunar landing; the camera rises while increasing its distance from both Earth and Moon. Orbital phases and paths are schematic, and the Oort Cloud is a speculative particle distribution.
 
 ## Visual and scale rules
 

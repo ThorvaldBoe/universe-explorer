@@ -38,6 +38,7 @@ body.explanations-hidden .scene-meta { display: none; }
 .eyebrow { color: #a9c5f3; font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; }
 h1 { margin: 1rem 0 .7rem; font-size: clamp(2.6rem, 5.2vw, 4.5rem); line-height: .95; font-weight: 480; letter-spacing: -.065em; }
 .scene-meta p { max-width: 360px; color: #b2bfd5; font-size: .92rem; line-height: 1.55; }
+.provenance { display: inline-block; margin-top: .35rem; padding: .3rem .5rem; border: 1px solid #8ba5ca45; border-radius: 999px; color: #9fb4d3; font-size: .58rem; letter-spacing: .12em; line-height: 1.3; text-transform: uppercase; }
 .scale-chip { position: absolute; z-index: 2; right: 1rem; top: 1.4rem; display: flex; gap: .65rem; align-items: center; color: #c7d2e8; background: #0b1223bc; border: 1px solid #ffffff17; border-radius: 100px; padding: .65rem .95rem; font-size: .75rem; backdrop-filter: blur(10px); }
 .pulse { width: 6px; height: 6px; border-radius: 50%; background: #8bd8ca; box-shadow: 0 0 12px #8bd8ca; }
 .fallback { position: absolute; z-index: 3; inset: auto 1rem 1rem; padding: 1rem; background: #151e30; border-radius: 10px; }

@@ -5,7 +5,11 @@ import { chromium } from '@playwright/test';
 
 const artifactDir = 'artifacts/visual-review';
 const baseUrl = 'http://127.0.0.1:4173/universe-explorer/';
-const stops = ['On the street', 'Above the avenue', 'The city below', 'Above the atmosphere', 'A continental view', 'Earth from orbit', 'A world of its own'];
+const stops = [
+  'On the street', 'Above the avenue', 'The city below', 'Above the atmosphere',
+  'A continental view', 'Earth from orbit', 'A world of its own', 'Earth and Moon',
+  'The inner Solar System', 'The planetary Solar System', 'Beyond Neptune', 'The Oort Cloud',
+];
 const browserErrors = [];
 await mkdir(artifactDir, { recursive: true });
 
@@ -49,7 +53,7 @@ try {
       await page.getByRole('button', { name: `Go to ${scenesForViewport[i]}` }).click();
       await page.getByRole('heading', { name: scenesForViewport[i] }).waitFor();
       await delay(350);
-      await page.screenshot({ path: `${artifactDir}/${viewport.name}-0${i + 1}-${scenesForViewport[i].toLowerCase().replaceAll(' ', '-')}.png`, fullPage: true, timeout: 90000 });
+      await page.screenshot({ path: `${artifactDir}/${viewport.name}-${String(i + 1).padStart(2, '0')}-${scenesForViewport[i].toLowerCase().replaceAll(' ', '-')}.png`, fullPage: true, timeout: 90000 });
     }
     const webgl = await page.locator('#fallback').isHidden();
     await writeFile(`${artifactDir}/${viewport.name}-report.json`, JSON.stringify({

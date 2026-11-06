@@ -1,8 +1,8 @@
 import type { Stop } from '../types';
+import {
+  ASTRONOMICAL_UNIT_KM, EARTH_MOON_DISTANCE_KM, EARTH_RADIUS_KM, MOON_RADIUS_KM,
+} from './solar-system';
 
-const EARTH_RADIUS_KM = 6371;
-const MOON_RADIUS_KM = 1737.4;
-const MOON_DISTANCE_KM = 384_400;
 const EARTH_LATITUDE = Math.PI / 4;
 const MOON_SITE_LATITUDE = Math.PI / 4;
 const earthUp = [0, Math.cos(EARTH_LATITUDE), Math.sin(EARTH_LATITUDE)] as [number, number, number];
@@ -31,7 +31,7 @@ const earthLookAt = (position: [number, number, number]): [number, number, numbe
   position[1] + earthViewDirection[1],
   position[2] + earthViewDirection[2],
 ];
-const moonCenter: [number, number, number] = [MOON_DISTANCE_KM, 0, 0];
+const moonCenter: [number, number, number] = [EARTH_MOON_DISTANCE_KM, 0, 0];
 const moonUp: [number, number, number] = [-Math.cos(MOON_SITE_LATITUDE), 0, Math.sin(MOON_SITE_LATITUDE)];
 const moonForward: [number, number, number] = [-Math.sin(MOON_SITE_LATITUDE), 0, -Math.cos(MOON_SITE_LATITUDE)];
 const moonSurface: [number, number, number] = [
@@ -46,6 +46,23 @@ const lunarCameraPosition: [number, number, number] = [
 ];
 // Keep the final standing view aimed back toward Earth, above the lunar horizon.
 const lunarLookAt: [number, number, number] = [0, 0, 0];
+const EARTH_MOON_MIDPOINT_KM: [number, number, number] = [EARTH_MOON_DISTANCE_KM / 2, 0, 0];
+
+function solarStop(
+  id: string, title: string, introduction: string,
+  visibleWidthKm: number, scaleLabel: string,
+  focus: [number, number, number], camera: [number, number, number],
+): Stop {
+  return {
+    id, chapter: '04 · Solar System', title, introduction,
+    visibleWidthMeters: visibleWidthKm * 1000,
+    cameraFrameWidthMeters: visibleWidthKm * 1000,
+    scaleLabel: `View width · ${scaleLabel}`,
+    renderer: 'solar-system', provenance: id === 'oort-cloud' ? 'speculative' : 'illustrative',
+    cameraPositionKm: camera, focusPositionKm: focus, lookAtPositionKm: focus,
+    cameraUp: [0, 1, 0], cameraFovDegrees: 45,
+  };
+}
 
 function earthStop(
   id: string, chapter: string, title: string, introduction: string,
@@ -96,4 +113,29 @@ export const stops: Stop[] = [
     sceneUp: moonUp,
     sceneForward: moonForward,
   },
+  solarStop(
+    'earth-moon', 'Earth and Moon',
+    'Earth and the Moon remain 384,400 km apart center to center. Both bodies keep their true size; the camera pulls away from the lunar surface while Earth recedes.',
+    800_000, '800,000 km', EARTH_MOON_MIDPOINT_KM, EARTH_MOON_MIDPOINT_KM,
+  ),
+  solarStop(
+    'inner-solar-system', 'The inner Solar System',
+    'The Sun, Mercury, Venus, Earth and Mars fit within this view. Orbital distances are measured; phase positions and circular, coplanar paths are schematic. Planet markers are enlarged for legibility.',
+    500_000_000, '500 million km', [-ASTRONOMICAL_UNIT_KM, 0, 0], [-ASTRONOMICAL_UNIT_KM, 0, 1],
+  ),
+  solarStop(
+    'planetary-solar-system', 'The planetary Solar System',
+    'Jupiter, Saturn, Uranus and Neptune emerge across vast distances. Neptune orbits about 30 AU from the Sun; planet markers are enlarged for legibility.',
+    10_000_000_000, '10 billion km', [-ASTRONOMICAL_UNIT_KM, 0, 0], [-ASTRONOMICAL_UNIT_KM, 0, 1],
+  ),
+  solarStop(
+    'beyond-neptune', 'Beyond Neptune',
+    'Neptune, Pluto and the Kuiper Belt occupy the same broad neighborhood. Pluto’s changing orbit and the belt positions are shown schematically.',
+    20_000_000_000, '20 billion km', [-ASTRONOMICAL_UNIT_KM, 0, 0], [-ASTRONOMICAL_UNIT_KM, 0, 1],
+  ),
+  solarStop(
+    'oort-cloud', 'The Oort Cloud',
+    'A diffuse, hypothetical reservoir of distant comets surrounds the planetary region. It has not been directly observed; the cloud is shown as a speculative illustration, not a measured shell.',
+    28_382_100_000_000, '3 light-years', [-ASTRONOMICAL_UNIT_KM, 0, 0], [-ASTRONOMICAL_UNIT_KM, 0, 1],
+  ),
 ];

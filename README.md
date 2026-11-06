@@ -24,7 +24,7 @@ The next planned chapter is documented in [Solar System storyboard](docs/solar-s
 1. Read the relevant specification and inspect the existing code before changing it.
 2. Agree on a small milestone and acceptance criteria. Prefer reusable modules and data-driven content over scene-specific shortcuts.
 3. Keep scientific facts, units, provenance, and references separate from rendering and interface code.
-4. Implement incrementally. For the initial release, prioritize Phase 0 and the four-scene Phase 1 proof of concept. The current vertical slice pilots a continuous Earth-to-Moon journey. Its Earth ascent uses gradual street, neighborhood, city, atmosphere, continental, and orbital views before the lunar scene; validate its camera motion and scene handoffs before expanding to all 18 stops.
+4. Implement incrementally. For the initial release, prioritize Phase 0 and the four-scene Phase 1 proof of concept. The current vertical slice continues from the Earth-to-Moon journey into the Solar System. Its first Solar System handoff retreats from the lunar surface while Earth recedes, then frames the Earth–Moon pair at 800,000 km before widening to the planetary views. Validate camera motion and scene handoffs before expanding to all 18 stops.
 5. Run the checks relevant to the change, exercise the affected user flow, and report what was and was not verified in the pull request.
 6. Update documentation, source/asset attribution, and this README when the change alters project conventions.
 7. After the Phase 1 vertical slice, report performance observations, visual limitations, remaining risks, and proposed next milestones before expanding scope.
@@ -42,6 +42,7 @@ Every pull request runs the production build and a headless Chromium review of e
 - Verify quantitative claims against authoritative sources. Record source links, asset origins, and license/attribution details alongside project content.
 - Treat the city map and street panorama as AI-generated illustrations, not depictions of a specific real city. Build aerial zoom levels from one master image; do not generate neighboring tiles independently. Keep any panorama as one continuous source image.
 - The Earth-to-Moon artwork pilot uses the saved generated road-to-Earth sequence at its native threefold levels (1 m through 129,140 km view width), then the saved lunar-surface image. It skips the 387,420 km-wide storyboard frame; the final scene separately labels the mean Earth–Moon center separation as 384,400 km. The image scale chip reports **view width**, which is distinct from camera altitude and orbital distance. These images are photorealistic illustrations, not geographically exact or observations; runtime WebP copies preserve the source PNGs.
+- The Solar System renderer keeps physical body radii and mean orbital distances in kilometers. Orbit paths and representative phases are schematic and coplanar; body markers and labels are enlarged presentation aids. The diffuse Oort Cloud is hypothetical and explicitly labeled as speculative.
 
 ### Scale references
 
