@@ -1,13 +1,11 @@
 import type { RendererKind } from '../types';
 import type { SceneRenderer } from './types';
-import { cityRenderer } from './city';
 import { planetaryRenderer } from './planetary';
 import { lunarRenderer } from './lunar';
 import { galacticRenderer } from './galactic';
 import { cosmicRenderer } from './cosmic';
 
-export const sceneRenderers: Record<RendererKind, SceneRenderer> = {
-  city: cityRenderer,
+export const sceneRenderers: Partial<Record<RendererKind, SceneRenderer>> = {
   planetary: planetaryRenderer,
   stellar: planetaryRenderer,
   lunar: lunarRenderer,

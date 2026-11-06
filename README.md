@@ -29,7 +29,7 @@ A browser-based journey from Earth to the observable universe. See [initial-spec
 
 ### Pre-merge visual review
 
-Every pull request runs the production build and a headless Chromium review of every journey stop at desktop, iPad portrait, and phone sizes. The workflow attaches screenshots, WebGL availability reports, browser errors, and a forward journey recording as a downloadable artifact. Inspect these artifacts and resolve visual issues before merging; this review does not replace checking on physical devices.
+Every pull request runs the production build and a headless Chromium review of every journey stop at desktop, iPad portrait, and phone sizes. The workflow attaches screenshots, WebGL availability reports, browser errors, and a forward-and-return journey recording as a downloadable artifact. Inspect these artifacts and resolve visual issues before merging; this review does not replace checking on physical devices.
 
 ## Scientific and visual standards
 
@@ -38,7 +38,13 @@ Every pull request runs the production build and a headless Chromium review of e
 - Label content as observed/measured, reconstructed/modeled, illustrative, or speculative. In particular, identify the city and lunar landing scenes as illustrations, and distinguish them from observed planetary imagery.
 - Distinguish visible width, object diameter, altitude, orbital distance, and light-travel time. Use appropriate units and sensible precision.
 - Verify quantitative claims against authoritative sources. Record source links, asset origins, and license/attribution details alongside project content.
-- Treat the city map and street panorama as AI-generated illustrations, not depictions of a specific real city. Build all aerial zoom levels and tiles from one master image; do not generate neighboring tiles independently. Keep the street panorama as one continuous source image; scale it back while it fills the view, then fade it into the Earth scene during ascent.
+- Treat the city map and street panorama as AI-generated illustrations, not depictions of a specific real city. Build aerial zoom levels from one master image; do not generate neighboring tiles independently. Keep any panorama as one continuous source image.
+- The Earth-to-Moon artwork pilot uses the saved generated road-to-Earth sequence at its native threefold levels (1 m through 129,140 km view width), then the saved lunar-surface image. It skips the 387,420 km-wide storyboard frame; the final scene separately labels the mean Earth–Moon center separation as 384,400 km. The image scale chip reports **view width**, which is distinct from camera altitude and orbital distance. These images are photorealistic illustrations, not geographically exact or observations; runtime WebP copies preserve the source PNGs.
+
+### Scale references
+
+- NASA, [Earth facts](https://science.nasa.gov/earth/facts/) (mean radius about 6,371 km).
+- NASA, [Moon facts](https://science.nasa.gov/moon/facts/) (mean radius about 1,737 km; mean Earth–Moon center distance about 384,400 km).
 
 ## Engineering and accessibility standards
 

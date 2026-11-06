@@ -76,21 +76,24 @@ function earthStop(
 
 export const stops: Stop[] = [
   {
-    ...earthStop('street', '01 · Earth', 'On the street', 'Look down the avenue. Then rise straight back, keeping your gaze fixed on the road below.', .0017, 120, 'Street level · eye height 1.7 m'),
+    ...earthStop('street', '01 · Earth', 'On the street', 'A single painted lane marker fills the frame. The ascent starts straight up from the asphalt.', .0017, 1, 'Road surface · 1 m across'),
     cameraFovDegrees: 70,
   },
-  earthStop('neighborhood', '01 · Earth', 'Above the avenue', 'Street blocks begin to resolve into a neighborhood as the camera lifts above the rooftops.', .35, 1200, 'Neighborhood · 350 m above the surface'),
-  earthStop('city', '01 · Earth', 'The city below', 'The city grid and the surrounding landscape come into view, while the road remains beneath you.', 8, 30_000, 'City scale · 8 km above the surface'),
-  earthStop('atmosphere', '02 · Earth and Moon', 'Above the atmosphere', 'The blue edge of the atmosphere appears. The continent is still close enough to read.', 160, 800_000, 'Upper atmosphere · 160 km above the surface', 'planetary'),
-  earthStop('continents', '02 · Earth and Moon', 'A continental view', 'A curved horizon opens around the continent. Earth’s true scale begins to emerge.', 2200, 15_000_000, 'Low orbit · 2,200 km above the surface', 'planetary'),
-  earthStop('earth', '02 · Earth and Moon', 'Earth from orbit', 'The whole planet now fits in view. The Moon is still nearly 384,400 km away.', 22_300 - EARTH_RADIUS_KM, 30_000_000, 'Earth · 22,300 km from its center', 'planetary'),
+  earthStop('neighborhood', '01 · Earth', 'Above the avenue', 'The painted line recedes as nearby road detail and the first blocks enter the frame.', .35, 27, 'View width · 27 m'),
+  earthStop('city', '01 · Earth', 'The city below', 'Roads, blocks, and the wider city appear through successive threefold zoom levels.', 8, 729, 'View width · 729 m'),
+  earthStop('atmosphere', '02 · Earth and Moon', 'Above the atmosphere', 'The city gives way to regional detail, then the blue edge of the atmosphere.', 160, 19_683, 'View width · 19.7 km', 'planetary'),
+  earthStop('continents', '02 · Earth and Moon', 'A continental view', 'Landforms expand across the view; the curved edge of Earth begins to emerge.', 2200, 531_441, 'View width · 531 km', 'planetary'),
+  {
+    ...earthStop('earth', '02 · Earth and Moon', 'Earth from orbit', 'A blue world hangs in deep black. The Moon is our next destination, about 384,400 km from Earth’s center.', 122_769, 129_140_163, 'Earth · 129,140 km view width', 'planetary'),
+    cameraFovDegrees: 53.13,
+  },
   {
     id: 'moon',
     chapter: '03 · Moon',
     title: 'A world of its own',
     introduction: 'Stand on the Moon’s near side. Earth hangs above the lunar horizon.',
     visibleWidthMeters: 100_000,
-    scaleLabel: 'Lunar surface · near side',
+    scaleLabel: 'Moon surface · centers 384,400 km apart',
     renderer: 'lunar',
     provenance: 'illustrative',
     cameraPositionKm: lunarCameraPosition,

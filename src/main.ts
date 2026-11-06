@@ -1,16 +1,13 @@
 import * as THREE from 'three';
 import { stops } from './data/stops';
 import { sceneRenderers } from './scenes/registry';
+import { DeepZoomArtwork, earthZoomArtIndexByStop, earthZoomFrames } from './scenes/deep-zoom-artwork';
 import type { RendererKind, Stop } from './types';
 import './style.css';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#universe')!;
 const sceneWrap = document.querySelector<HTMLElement>('.scene-wrap')!;
-const streetPanoramaUrl = new URL('./assets/city-street-panorama.png', import.meta.url).href;
-const streetPhoto = document.createElement('div');
-streetPhoto.className = 'street-photo';
-streetPhoto.style.backgroundImage = `url("${streetPanoramaUrl}")`;
-sceneWrap.prepend(streetPhoto);
+const artwork = new DeepZoomArtwork(sceneWrap);
 const title = document.querySelector<HTMLElement>('#scene-title')!;
 const chapter = document.querySelector<HTMLElement>('#chapter')!;
 const copy = document.querySelector<HTMLElement>('#scene-copy')!;
@@ -29,6 +26,7 @@ let camera: THREE.PerspectiveCamera;
 const cameraWorldPosition = new THREE.Vector3();
 let frame = 0;
 let active = 0;
+let preparingJourney = false;
 let journey: {
   from: number;
   to: number;
@@ -45,6 +43,8 @@ let journey: {
   fromUp: THREE.Vector3;
   toUp: THREE.Vector3;
   earthArc: boolean;
+  fromArtIndex: number;
+  toArtIndex: number;
 } | undefined;
 const sceneGroups = new Map<number, THREE.Group>();
 const starGeometry = new THREE.BufferGeometry();
@@ -81,9 +81,11 @@ function updateInterface(index: number) {
   title.textContent = stop.title;
   chapter.textContent = 'CHAPTER ' + stop.chapter.toUpperCase();
   copy.textContent = stop.introduction;
-  scale.textContent = stop.scaleLabel;
-  previous.disabled = index === 0 || Boolean(journey);
-  next.disabled = Boolean(journey);
+  scale.textContent = index < earthZoomArtIndexByStop.length
+    ? artwork.labelAt(earthZoomArtIndexByStop[index])
+    : stop.scaleLabel;
+  previous.disabled = index === 0 || Boolean(journey) || preparingJourney;
+  next.disabled = Boolean(journey) || preparingJourney;
   next.innerHTML = index === 0
     ? 'Begin ascent <span aria-hidden="true">↑</span>'
     : index === stops.length - 1
@@ -92,7 +94,7 @@ function updateInterface(index: number) {
   progress.replaceChildren(...stops.map((item, position) => {
     const button = document.createElement('button');
     button.className = position === index ? 'dot current' : 'dot';
-    button.type = 'button'; button.title = item.title; button.disabled = Boolean(journey);
+    button.type = 'button'; button.title = item.title; button.disabled = Boolean(journey) || preparingJourney;
     button.setAttribute('aria-label', 'Go to ' + item.title);
     button.setAttribute('aria-current', position === index ? 'step' : 'false');
     button.addEventListener('click', () => navigate(position));
@@ -104,23 +106,34 @@ function updateInterface(index: number) {
 function ensureScene(index: number) {
   if (sceneGroups.has(index)) return;
   const stop = stops[index];
+  const sceneRenderer = sceneRenderers[stop.renderer];
+  if (!sceneRenderer) return;
   if (stop.renderer === 'planetary') {
     const sharedPlanet = [...sceneGroups.entries()].find(([existingIndex]) => stops[existingIndex].renderer === 'planetary')?.[1];
     if (sharedPlanet) { sceneGroups.set(index, sharedPlanet); return; }
   }
-  const group = sceneRenderers[stop.renderer].create(stop);
+  const group = sceneRenderer.create(stop);
   group.userData.worldPosition ??= group.position.clone();
   scene.add(group);
   sceneGroups.set(index, group);
 }
 
-function navigate(requestedIndex: number) {
-  if (journey) return;
+async function navigate(requestedIndex: number) {
+  if (journey || preparingJourney) return;
   const index = (requestedIndex + stops.length) % stops.length;
   if (index === active) return;
   ensureScene(index);
 
   const from = active;
+  const fromArtIndex = earthZoomArtIndexByStop[from] ?? earthZoomArtIndexByStop.at(-1)!;
+  const toArtIndex = earthZoomArtIndexByStop[index] ?? earthZoomArtIndexByStop.at(-1)!;
+  preparingJourney = true;
+  previous.disabled = true;
+  next.disabled = true;
+  progress.querySelectorAll('button').forEach((button) => { button.disabled = true; });
+  scale.textContent = 'Preparing the next view…';
+  await artwork.prepareTransition(fromArtIndex, toArtIndex, stops[from].id === 'moon' || stops[index].id === 'moon');
+
   const fromPosition = cameraWorldPosition.clone();
   const toPosition = positionFor(index);
   const fromTarget = targetFor(from);
@@ -130,7 +143,7 @@ function navigate(requestedIndex: number) {
   const fromUp = camera.up.clone();
   const toUp = upFor(stops[index]);
   const earthToEarth = from < stops.findIndex((stop) => stop.id === 'moon') && index < stops.findIndex((stop) => stop.id === 'moon');
-  const duration = reducedMotion ? .01 : earthToEarth ? 7.5 + Math.min(index, 4) * .35 : 7.2;
+  const duration = reducedMotion ? .01 : earthToEarth ? 7.5 + Math.min(index, 4) * .35 : 9.5;
 
   journey = {
     from, to: index, start: performance.now(), duration: duration * 1000,
@@ -139,15 +152,17 @@ function navigate(requestedIndex: number) {
     toQuaternion: orientationAt(toPosition, toLookAt, toUp),
     fromTarget, toTarget, fromLookAt, toLookAt, fromUp, toUp,
     earthArc: earthToEarth,
+    fromArtIndex, toArtIndex,
   };
+  preparingJourney = false;
   previous.disabled = true; next.disabled = true;
   progress.querySelectorAll('button').forEach((button) => { button.disabled = true; });
 }
 
-function formatDistance(distanceKm: number) {
-  if (distanceKm < 1) return Math.round(distanceKm * 1000) + ' m from Earth center';
-  if (distanceKm < 10_000) return Math.round(distanceKm).toLocaleString() + ' km from Earth center';
-  if (distanceKm < 1_000_000) return distanceKm.toPrecision(3) + ' km from Earth center';
+function formatDistance(distanceKm: number, reference = 'Earth center') {
+  if (distanceKm < 1) return Math.round(distanceKm * 1000) + ` m from ${reference}`;
+  if (distanceKm < 10_000) return Math.round(distanceKm).toLocaleString() + ` km from ${reference}`;
+  if (distanceKm < 1_000_000) return distanceKm.toLocaleString(undefined, { maximumSignificantDigits: 3 }) + ` km from ${reference}`;
   if (distanceKm < 100 * AU_KM) return (distanceKm / AU_KM).toPrecision(3) + ' AU from Earth';
   return (distanceKm / LIGHT_YEAR_KM).toPrecision(3) + ' light-years from Earth';
 }
@@ -169,6 +184,13 @@ function updateJourney(now: number) {
   if (!journey) return;
   const raw = Math.min(1, (now - journey.start) / journey.duration);
   const eased = journey.earthArc ? raw ** 2.4 : raw * raw * (3 - 2 * raw);
+  if (stops[journey.to].id === 'moon') {
+    artwork.showLunarArrival(journey.fromArtIndex, eased);
+  } else if (stops[journey.from].id === 'moon') {
+    artwork.showLunarDeparture(journey.toArtIndex, eased);
+  } else if (journey.earthArc) {
+    artwork.showEarthTransition(journey.fromArtIndex, journey.toArtIndex, eased);
+  }
   const fromDistance = journey.fromPosition.distanceTo(journey.fromTarget);
   const toDistance = journey.toPosition.distanceTo(journey.toTarget);
   const distance = Math.exp(Math.log(fromDistance) + (Math.log(toDistance) - Math.log(fromDistance)) * eased);
@@ -196,7 +218,19 @@ function updateJourney(now: number) {
   const toFov = stops[journey.to].cameraFovDegrees ?? 48;
   camera.fov = fromFov + (toFov - fromFov) * eased;
   camera.updateProjectionMatrix();
-  scale.textContent = formatDistance(cameraWorldPosition.length());
+  if (stops[journey.to].id === 'moon') {
+    scale.textContent = eased < .5
+      ? formatDistance(cameraWorldPosition.length(), 'Earth center')
+      : formatDistance(cameraWorldPosition.distanceTo(journey.toTarget), 'Moon center');
+  } else if (stops[journey.from].id === 'moon') {
+    scale.textContent = eased < .5
+      ? formatDistance(cameraWorldPosition.distanceTo(journey.fromTarget), 'Moon center')
+      : artwork.labelAt(artwork.frameIndexAt(earthZoomArtIndexByStop.at(-1)!, journey.toArtIndex, (eased - .5) / .5));
+  } else if (journey.earthArc) {
+    scale.textContent = artwork.labelAt(artwork.frameIndexAt(journey.fromArtIndex, journey.toArtIndex, eased));
+  } else {
+    scale.textContent = formatDistance(cameraWorldPosition.length());
+  }
   if (raw >= 1) finishJourney();
 }
 
@@ -217,7 +251,6 @@ function init() {
     const stars = new THREE.Points(starGeometry, starMaterial);
     stars.frustumCulled = false; scene.add(stars);
     scene.add(new THREE.AmbientLight(0x8ea9d8, .3));
-    ensureScene(0);
     ensureScene(stops.findIndex((stop) => stop.renderer === 'planetary'));
     window.addEventListener('resize', resize);
     render();
@@ -239,11 +272,10 @@ function render() {
   frame = requestAnimationFrame(render);
   const elapsed = clock.getElapsedTime();
   updateJourney(performance.now());
-  const ascentAltitudeKm = Math.max(0, cameraWorldPosition.length() - EARTH_RADIUS_KM);
-  const zoomProgress = THREE.MathUtils.smoothstep(Math.log10(ascentAltitudeKm + .0017), Math.log10(.0017), Math.log10(8));
-  streetPhoto.style.transform = 'scale(1)';
-  streetPhoto.style.backgroundSize = (200 - 100 * zoomProgress) + '% auto';
-  streetPhoto.style.opacity = String(1 - THREE.MathUtils.smoothstep(ascentAltitudeKm, 8, 160));
+  if (!journey) {
+    if (stops[active].id === 'moon') artwork.showLunarArrival(earthZoomArtIndexByStop.at(-1)!, 1);
+    else artwork.showEarthFrame(earthZoomArtIndexByStop[active]);
+  }
   const distance = Math.max(EARTH_RADIUS_KM, cameraWorldPosition.length());
   if (starMaterial) starMaterial.opacity = .72 * THREE.MathUtils.smoothstep(distance, EARTH_RADIUS_KM * 1.5, EARTH_RADIUS_KM * 12);
   const stars = scene.children.find((object) => object instanceof THREE.Points) as THREE.Points | undefined;
@@ -254,7 +286,7 @@ function render() {
     if (updatedGroups.has(group)) continue;
     updatedGroups.add(group);
     group.position.copy(group.userData.worldPosition as THREE.Vector3).sub(cameraWorldPosition);
-    sceneRenderers[stops[index].renderer].update?.(group, elapsed, context);
+    sceneRenderers[stops[index].renderer]?.update?.(group, elapsed, context);
   }
   renderer.render(scene, camera);
 }
@@ -262,7 +294,7 @@ function render() {
 previous.addEventListener('click', () => navigate(active - 1));
 next.addEventListener('click', () => navigate(active === stops.length - 1 ? 0 : active + 1));
 document.addEventListener('keydown', (event) => {
-  if (journey || (event.target instanceof HTMLElement && ['BUTTON', 'INPUT', 'TEXTAREA'].includes(event.target.tagName))) return;
+  if (journey || preparingJourney || (event.target instanceof HTMLElement && ['BUTTON', 'INPUT', 'TEXTAREA'].includes(event.target.tagName))) return;
   if (event.key === 'ArrowRight') navigate(active + 1);
   if (event.key === 'ArrowLeft') navigate(active - 1);
 });
