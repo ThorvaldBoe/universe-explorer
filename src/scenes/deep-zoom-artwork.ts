@@ -99,6 +99,7 @@ export class DeepZoomArtwork {
     this.transform(this.back, 1, 1);
     this.transform(this.front, 1, 0);
     this.transform(this.moon, 1, 0);
+    this.moon.style.clipPath = 'inset(0 0 0 0)';
   }
 
   /** Render a factor-of-three image handoff; the central tile remains registered throughout. */
@@ -134,17 +135,18 @@ export class DeepZoomArtwork {
     this.transform(this.moon, 1, 0);
   }
 
-  /** The lunar handoff zooms away from Earth, then grows the saved surface view into frame. */
+  /** Earth recedes first; the lunar surface then rises from the bottom into the saved landing view. */
   showLunarArrival(earthFrameIndex: number, progress: number) {
     const p = clamp01(progress);
     const earthScale = 1 - .92 * smoothstep(0, .43, p);
     const earthOpacity = 1 - smoothstep(.22, .48, p);
-    const moonProgress = smoothstep(.69, 1, p);
+    const landingReveal = smoothstep(.69, 1, p);
     this.setImage(this.back, assetUrl(earthZoomFrames[earthFrameIndex].filename), 'back');
     this.transform(this.back, earthScale, earthOpacity);
     this.transform(this.front, 1, 0);
     this.setImage(this.moon, assetUrl('moon-surface-earth-view.png'), 'moon');
-    this.transform(this.moon, .14 + .86 * moonProgress, smoothstep(.69, .82, p));
+    this.moon.style.clipPath = `inset(${(1 - landingReveal) * 100}% 0 0 0)`;
+    this.transform(this.moon, 1, p >= .69 ? 1 : 0);
   }
 
   showLunarDeparture(targetEarthFrameIndex: number, progress: number) {

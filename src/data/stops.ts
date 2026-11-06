@@ -44,17 +44,8 @@ const lunarCameraPosition: [number, number, number] = [
   moonSurface[1] + moonUp[1] * .0017,
   moonSurface[2] + moonUp[2] * .0017,
 ];
-const lunarElevation = 20 * Math.PI / 180;
-const lunarViewDirection: [number, number, number] = [
-  moonUp[0] * Math.sin(lunarElevation) + moonForward[0] * Math.cos(lunarElevation),
-  moonUp[1] * Math.sin(lunarElevation) + moonForward[1] * Math.cos(lunarElevation),
-  moonUp[2] * Math.sin(lunarElevation) + moonForward[2] * Math.cos(lunarElevation),
-];
-const lunarLookAt: [number, number, number] = [
-  lunarCameraPosition[0] + lunarViewDirection[0] * 1000,
-  lunarCameraPosition[1] + lunarViewDirection[1] * 1000,
-  lunarCameraPosition[2] + lunarViewDirection[2] * 1000,
-];
+// Keep the final standing view aimed back toward Earth, above the lunar horizon.
+const lunarLookAt: [number, number, number] = [0, 0, 0];
 
 function earthStop(
   id: string, chapter: string, title: string, introduction: string,

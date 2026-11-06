@@ -223,8 +223,9 @@ function updateJourney(now: number) {
     // Keep the original camera quaternion throughout the radial Earth ascent.
     camera.quaternion.copy(journey.fromQuaternion);
   } else if (stops[journey.from].id === 'earth' && stops[journey.to].id === 'moon') {
-    const landingViewProgress = THREE.MathUtils.smoothstep(eased, .84, 1);
-    const lookTarget = journey.toTarget.clone().lerp(journey.toLookAt, landingViewProgress);
+    // Retreat toward the Moon while keeping Earth in view; never pivot to face the lunar surface.
+    const earthFacingBlend = THREE.MathUtils.smoothstep(eased, 0, .18);
+    const lookTarget = journey.fromLookAt.clone().lerp(journey.fromTarget, earthFacingBlend);
     camera.lookAt(lookTarget.sub(cameraWorldPosition));
   } else {
     const lookTarget = journey.fromLookAt.clone().lerp(journey.toLookAt, eased);
