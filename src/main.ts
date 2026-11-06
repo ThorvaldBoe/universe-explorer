@@ -112,10 +112,7 @@ function updateInterface(index: number) {
   title.textContent = stop.title;
   chapter.textContent = 'CHAPTER ' + stop.chapter.toUpperCase();
   copy.textContent = stop.introduction;
-  provenance.hidden = stop.renderer !== 'solar-system';
-  provenance.textContent = stop.provenance === 'speculative'
-    ? 'Speculative · not directly observed'
-    : 'Illustrative scene · geometry anchored to measured values';
+  updateProvenance(stop);
   scale.textContent = earthZoomArtIndexByStop[index] !== undefined
     ? artwork.labelAt(earthZoomArtIndexByStop[index])
     : stop.scaleLabel;
@@ -138,15 +135,20 @@ function updateInterface(index: number) {
   progress.setAttribute('aria-label', 'Stop ' + (index + 1) + ' of ' + stops.length);
 }
 
+function updateProvenance(stop: Stop) {
+  provenance.hidden = stop.renderer !== 'solar-system' && stop.renderer !== 'stellar';
+  if (stop.provenance === 'speculative') provenance.textContent = 'Speculative · not directly observed';
+  else if (stop.provenance === 'reconstructed') provenance.textContent = 'Reconstructed stellar field · illustrative density';
+  else if (stop.renderer === 'stellar') provenance.textContent = 'Catalogued positions · star markers enhanced';
+  else provenance.textContent = 'Illustrative scene · geometry anchored to measured values';
+}
+
 function updateJourneyCopy(index: number) {
   const stop = stops[index];
   title.textContent = stop.title;
   chapter.textContent = 'CHAPTER ' + stop.chapter.toUpperCase();
   copy.textContent = stop.introduction;
-  provenance.hidden = stop.renderer !== 'solar-system';
-  provenance.textContent = stop.provenance === 'speculative'
-    ? 'Speculative · not directly observed'
-    : 'Illustrative scene · geometry anchored to measured values';
+  updateProvenance(stop);
 }
 
 function ensureScene(index: number) {
@@ -161,6 +163,10 @@ function ensureScene(index: number) {
   if (stop.renderer === 'solar-system') {
     const sharedSolar = [...sceneGroups.entries()].find(([existingIndex]) => stops[existingIndex].renderer === 'solar-system')?.[1];
     if (sharedSolar) { sceneGroups.set(index, sharedSolar); return; }
+  }
+  if (stop.renderer === 'stellar') {
+    const sharedStellar = [...sceneGroups.entries()].find(([existingIndex]) => stops[existingIndex].renderer === 'stellar')?.[1];
+    if (sharedStellar) { sceneGroups.set(index, sharedStellar); return; }
   }
   const group = sceneRenderer.create(stop);
   group.userData.worldPosition ??= group.position.clone();
@@ -298,7 +304,7 @@ function updateJourney(now: number) {
     scale.textContent = eased < .5
       ? formatDistance(cameraWorldPosition.length(), 'Earth center')
       : formatDistance(cameraWorldPosition.distanceTo(journey.toTarget), 'Moon center');
-  } else if (lunarToEarthMoon || stops[journey.from].renderer === 'solar-system' || stops[journey.to].renderer === 'solar-system') {
+  } else if (lunarToEarthMoon || ['solar-system', 'stellar'].includes(stops[journey.from].renderer) || ['solar-system', 'stellar'].includes(stops[journey.to].renderer)) {
     const fromWidth = stops[journey.from].visibleWidthMeters / 1000;
     const toWidth = stops[journey.to].visibleWidthMeters / 1000;
     const width = Math.exp(Math.log(fromWidth) + (Math.log(toWidth) - Math.log(fromWidth)) * eased);
@@ -371,6 +377,8 @@ function render() {
     ? Math.exp(Math.log(stops[journey.from].visibleWidthMeters / 1000) + (Math.log(stops[journey.to].visibleWidthMeters / 1000) - Math.log(stops[journey.from].visibleWidthMeters / 1000)) * Math.min(1, (performance.now() - journey.start) / journey.duration))
     : stops[active].visibleWidthMeters / 1000;
   const context = { cameraWorldPosition, visibleWidthKm, viewportWidth: canvas.clientWidth, activeRenderer: journey ? stops[journey.to].renderer : stops[active].renderer };
+  camera.updateMatrixWorld(true);
+  Object.assign(context, { camera, viewportHeight: canvas.clientHeight });
   const updatedGroups = new Set<THREE.Group>();
   for (const [index, group] of sceneGroups) {
     if (updatedGroups.has(group)) continue;

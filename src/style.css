@@ -43,7 +43,7 @@ h1 { margin: 1rem 0 .7rem; font-size: clamp(2.6rem, 5.2vw, 4.5rem); line-height:
 .pulse { width: 6px; height: 6px; border-radius: 50%; background: #8bd8ca; box-shadow: 0 0 12px #8bd8ca; }
 .fallback { position: absolute; z-index: 3; inset: auto 1rem 1rem; padding: 1rem; background: #151e30; border-radius: 10px; }
 .controls { display: flex; justify-content: space-between; align-items: center; gap: 1rem; min-height: 94px; border-top: 1px solid #ffffff13; }
-.controls button { min-height: 48px; border-radius: 999px; padding: 0 1.35rem; cursor: pointer; border: 1px solid transparent; transition: transform .2s, background .2s, opacity .2s; }
+.controls button { min-height: 48px; border-radius: 999px; padding: 0 1.35rem; cursor: pointer; border: 1px solid transparent; white-space: nowrap; flex-shrink: 0; transition: transform .2s, background .2s, opacity .2s; }
 .controls button:not(:disabled):hover { transform: translateY(-2px); }
 .controls button:focus-visible { outline: 2px solid #b7d0ff; outline-offset: 4px; }
 .controls .primary { color: #07101e; font-weight: 650; background: #dbe8ff; }
@@ -62,6 +62,35 @@ h1 { margin: 1rem 0 .7rem; font-size: clamp(2.6rem, 5.2vw, 4.5rem); line-height:
   .scene-meta { position: static; transform: none; order: 1; width: 100%; padding: .45rem .1rem .25rem; background: none; border-radius: 0; text-shadow: none; }
   h1 { margin: .35rem 0 .4rem; font-size: clamp(2rem, 8.5vw, 2.65rem); line-height: 1.02; }
   .scene-meta p { max-width: 100%; margin: 0; font-size: .84rem; line-height: 1.45; }.scale-chip { top: .7rem; right: .6rem; font-size: .68rem; }
-  .controls { min-height: 78px; }.controls button { padding: 0 1rem; min-height: 46px; }.controls button span { display: none; }
+  .controls { min-height: 78px; }.controls button { padding: 0 .8rem; min-height: 46px; }.controls button span { display: none; }
+  .progress { min-width: 0; flex: 1; justify-content: center; gap: .2rem; }
+  .controls .dot { width: 4px; min-width: 4px; }.controls .dot.current { width: 12px; min-width: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+.stellar-label-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.stellar-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  max-width: 180px;
+  padding: 6px 9px;
+  border: 1px solid rgba(145, 183, 235, .52);
+  border-radius: 9px;
+  background: rgba(5, 12, 25, .84);
+  color: #edf4ff;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: .07em;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.stellar-label-sun { color: #ffe5ae; border-color: rgba(255, 215, 138, .6); }
+.stellar-label-region { color: #c6d7ff; }
