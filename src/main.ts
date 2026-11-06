@@ -120,6 +120,13 @@ function updateInterface(index: number) {
   progress.setAttribute('aria-label', 'Stop ' + (index + 1) + ' of ' + stops.length);
 }
 
+function updateJourneyCopy(index: number) {
+  const stop = stops[index];
+  title.textContent = stop.title;
+  chapter.textContent = 'CHAPTER ' + stop.chapter.toUpperCase();
+  copy.textContent = stop.introduction;
+}
+
 function ensureScene(index: number) {
   if (sceneGroups.has(index)) return;
   const stop = stops[index];
@@ -203,8 +210,10 @@ function updateJourney(now: number) {
   const eased = journey.earthArc ? raw ** 2.4 : raw * raw * (3 - 2 * raw);
   if (stops[journey.to].id === 'moon') {
     artwork.showLunarArrival(journey.fromArtIndex, eased);
+    if (eased >= .56) updateJourneyCopy(journey.to);
   } else if (stops[journey.from].id === 'moon') {
     artwork.showLunarDeparture(journey.toArtIndex, eased);
+    if (eased >= .44) updateJourneyCopy(journey.to);
   } else if (journey.earthArc) {
     artwork.showEarthTransition(journey.fromArtIndex, journey.toArtIndex, eased);
   }

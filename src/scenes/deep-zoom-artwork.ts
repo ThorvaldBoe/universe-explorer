@@ -32,10 +32,12 @@ export class DeepZoomArtwork {
   private readonly root: HTMLDivElement;
   private readonly back: HTMLImageElement;
   private readonly front: HTMLImageElement;
-  private readonly moon: HTMLImageElement;
+  private readonly moonSky: HTMLImageElement;
+  private readonly moonGround: HTMLImageElement;
   private lastBack = '';
   private lastFront = '';
-  private lastMoon = '';
+  private lastMoonSky = '';
+  private lastMoonGround = '';
   private readonly pending = new Map<string, Promise<void>>();
 
   constructor(parent: HTMLElement) {
@@ -44,7 +46,8 @@ export class DeepZoomArtwork {
     this.root.setAttribute('aria-hidden', 'true');
     this.back = this.createLayer('zoom-back');
     this.front = this.createLayer('zoom-front');
-    this.moon = this.createLayer('moon-arrival');
+    this.moonSky = this.createLayer('moon-sky');
+    this.moonGround = this.createLayer('moon-ground');
     parent.prepend(this.root);
     this.preload(assetUrl(earthZoomFrames[0].filename));
     this.showEarthFrame(0);
@@ -80,14 +83,15 @@ export class DeepZoomArtwork {
     return Promise.all(requests);
   }
 
-  private setImage(image: HTMLImageElement, src: string, which: 'back' | 'front' | 'moon') {
+  private setImage(image: HTMLImageElement, src: string, which: 'back' | 'front' | 'moonSky' | 'moonGround') {
     if (which === 'back' && this.lastBack !== src) { image.src = src; this.lastBack = src; }
     if (which === 'front' && this.lastFront !== src) { image.src = src; this.lastFront = src; }
-    if (which === 'moon' && this.lastMoon !== src) { image.src = src; this.lastMoon = src; }
+    if (which === 'moonSky' && this.lastMoonSky !== src) { image.src = src; this.lastMoonSky = src; }
+    if (which === 'moonGround' && this.lastMoonGround !== src) { image.src = src; this.lastMoonGround = src; }
   }
 
-  private transform(image: HTMLImageElement, scale: number, opacity: number) {
-    image.style.transform = `scale(${scale})`;
+  private transform(image: HTMLImageElement, scale: number, opacity: number, x = 0, y = 0) {
+    image.style.transform = `translate(${x}%, ${y}%) scale(${scale})`;
     image.style.opacity = String(clamp01(opacity));
   }
 
@@ -98,13 +102,18 @@ export class DeepZoomArtwork {
     this.setImage(this.front, src, 'front');
     this.transform(this.back, 1, 1);
     this.transform(this.front, 1, 0);
-    this.transform(this.moon, 1, 0);
-    this.moon.style.clipPath = 'inset(0 0 0 0)';
+    this.transform(this.moonSky, 1, 0);
+    this.transform(this.moonGround, 1, 0);
+    this.moonSky.style.clipPath = 'inset(0 0 0 0)';
+    this.moonGround.style.clipPath = 'inset(0 0 0 0)';
+    this.moonGround.style.transformOrigin = '';
+    this.root.style.background = 'transparent';
   }
 
   /** Render a factor-of-three image handoff; the central tile remains registered throughout. */
   showEarthTransition(fromIndex: number, toIndex: number, progress: number) {
     const p = clamp01(progress);
+    this.root.style.background = 'transparent';
     const index = THREE.MathUtils.clamp(fromIndex + (toIndex - fromIndex) * p, 0, earthZoomFrames.length - 1);
     if (toIndex >= fromIndex) {
       const lower = Math.floor(index);
@@ -126,27 +135,44 @@ export class DeepZoomArtwork {
       this.transform(this.back, 1 + 2 * local, 1);
       if (upper === lower) {
         this.transform(this.front, 1, 0);
-        this.transform(this.moon, 1, 0);
+        this.transform(this.moonSky, 1, 0);
+        this.transform(this.moonGround, 1, 0);
         return;
       }
       this.setImage(this.front, assetUrl(earthZoomFrames[lower].filename), 'front');
       this.transform(this.front, 1 / 3 + (2 / 3) * local, 1);
     }
-    this.transform(this.moon, 1, 0);
+    this.transform(this.moonSky, 1, 0);
+    this.transform(this.moonGround, 1, 0);
   }
 
-  /** Earth recedes first; the lunar surface then rises from the bottom into the saved landing view. */
+  /** Keep Earth registered while the lunar surface approaches beneath it. */
   showLunarArrival(earthFrameIndex: number, progress: number) {
     const p = clamp01(progress);
-    const earthScale = 1 - .92 * smoothstep(0, .43, p);
-    const earthOpacity = 1 - smoothstep(.22, .48, p);
-    const landingReveal = smoothstep(.69, 1, p);
+    // The last Earth frame's disk is about 9.5% of its width; at 24% image scale
+    // it matches the ~2.3% Earth disk in the Moon artwork. Translate it to that
+    // artwork's final screen position before crossfading the sky layer.
+    const earthHandoff = smoothstep(0, .66, p);
+    const earthScale = 1 - .76 * earthHandoff;
+    const earthOpacity = 1 - smoothstep(.72, .9, p);
+    const earthX = 19 * earthHandoff;
+    const earthY = -30 * earthHandoff;
+    const skyOpacity = smoothstep(.66, .88, p);
+    const groundProgress = smoothstep(.2, 1, p);
+    const groundScale = .62 + .38 * groundProgress;
     this.setImage(this.back, assetUrl(earthZoomFrames[earthFrameIndex].filename), 'back');
-    this.transform(this.back, earthScale, earthOpacity);
+    this.transform(this.back, earthScale, earthOpacity, earthX, earthY);
     this.transform(this.front, 1, 0);
-    this.setImage(this.moon, assetUrl('moon-surface-earth-view.png'), 'moon');
-    this.moon.style.clipPath = `inset(${(1 - landingReveal) * 100}% 0 0 0)`;
-    this.transform(this.moon, 1, p >= .69 ? 1 : 0);
+    const moonImage = assetUrl('moon-surface-earth-view.png');
+    this.setImage(this.moonSky, moonImage, 'moonSky');
+    this.setImage(this.moonGround, moonImage, 'moonGround');
+    this.root.style.background = '#000';
+    this.moonSky.style.clipPath = 'inset(0 0 56% 0)';
+    this.moonGround.style.clipPath = 'inset(43% 0 0 0)';
+    this.moonGround.style.transformOrigin = 'center bottom';
+    this.transform(this.moonSky, 1, skyOpacity);
+    this.transform(this.moonGround, 1, groundProgress);
+    this.moonGround.style.transform = `scaleY(${groundScale})`;
   }
 
   showLunarDeparture(targetEarthFrameIndex: number, progress: number) {
