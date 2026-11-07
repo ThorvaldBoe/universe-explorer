@@ -186,6 +186,12 @@ export class DeepZoomArtwork {
     const handoff = .5;
     if (p <= handoff) {
       this.showLunarArrival(earthZoomFrames.length - 1, 1 - p / handoff);
+      const moonArtworkOpacity = 1 - smoothstep(.12, .44, p);
+      const retreat = p / handoff;
+      const retreatScale = 1 - .42 * retreat;
+      this.moonGround.style.transformOrigin = 'center';
+      this.transform(this.moonSky, retreatScale, moonArtworkOpacity, -18 * retreat, -8 * retreat);
+      this.transform(this.moonGround, retreatScale, moonArtworkOpacity, -18 * retreat, -8 * retreat);
       return;
     }
     this.showEarthTransition(earthZoomFrames.length - 1, targetEarthFrameIndex, (p - handoff) / (1 - handoff));
@@ -194,19 +200,21 @@ export class DeepZoomArtwork {
   /** Pull back from the lunar surface into the scale-accurate 3D Earth–Moon scene. */
   showLunarDepartureToSystem(progress: number) {
     const p = clamp01(progress);
-    const clear = smoothstep(.7, 1, p);
+    const clear = smoothstep(.62, .9, p);
+    const artworkOpacity = 1 - clear;
     const image = assetUrl('moon-surface-earth-view.png');
     this.setImage(this.moonSky, image, 'moonSky');
     this.setImage(this.moonGround, image, 'moonGround');
     this.root.style.background = '#000';
     this.moonSky.style.clipPath = 'inset(0 0 56% 0)';
     this.moonGround.style.clipPath = 'inset(43% 0 0 0)';
-    this.moonGround.style.transformOrigin = 'center bottom';
+    this.moonGround.style.transformOrigin = 'center';
     this.transform(this.back, 1, 0);
     this.transform(this.front, 1, 0);
     // Earth begins at its lunar-art size and recedes steadily to its 800,000 km frame size.
-    this.transform(this.moonSky, 1 - .3 * p, 1 - clear, -18 * p, -8 * p);
-    this.transform(this.moonGround, 1 - .42 * smoothstep(.05, .68, p), 1 - smoothstep(.02, .62, p));
+    const retreatScale = 1 - .3 * p;
+    this.transform(this.moonSky, retreatScale, artworkOpacity, -18 * p, -8 * p);
+    this.transform(this.moonGround, retreatScale, artworkOpacity, -18 * p, -8 * p);
   }
 
   showSceneOnly() {

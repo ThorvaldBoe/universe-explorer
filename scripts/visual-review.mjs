@@ -75,6 +75,14 @@ try {
   await videoPage.getByRole('button', { name: /Begin ascent/ }).click();
   for (let i = 1; i < stops.length - 1; i++) {
     await videoPage.getByRole('heading', { name: stops[i] }).waitFor({ timeout: 20000 });
+    if (stops[i] === 'A world of its own') {
+      // Capture both Moon exits: retreat back to Earth, then return and continue
+      // outward into the scale-accurate Earth–Moon system.
+      await videoPage.getByRole('button', { name: /Previous/ }).click();
+      await videoPage.getByRole('heading', { name: 'Earth from orbit' }).waitFor({ timeout: 20000 });
+      await videoPage.getByRole('button', { name: /Go further/ }).click();
+      await videoPage.getByRole('heading', { name: 'A world of its own' }).waitFor({ timeout: 20000 });
+    }
     await videoPage.getByRole('button', { name: /Go further/ }).click();
   }
   await videoPage.getByRole('heading', { name: stops[stops.length - 1] }).waitFor({ timeout: 20000 });
