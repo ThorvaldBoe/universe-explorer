@@ -1,6 +1,6 @@
 # Milky Way storyboard
 
-Step 4 continues from the reconstructed 10,000-light-year Local Galactic Region to a galaxy-scale view. This document plans the reveal and technical handoff; it does not implement the renderer or add a journey stop.
+Step 4 continues from the reconstructed 10,000-light-year Local Galactic Region to the galaxy-scale Milky Way view. The implementation adds one selectable destination; the 30,000- and 90,000-light-year checkpoints are traversed during its continuous transition rather than added as separate stops.
 
 ## Scale and frames
 
@@ -18,7 +18,7 @@ The 150,000-light-year value is the visible frame width specified in the origina
 - The 10,000-light-year scene begins Sun-centered. Keep the Sun's marker attached to the same conceptual origin as the preceding stars chapter.
 - In the galactic coordinate model, place the Sun about 26,000 light-years from the Galactic Center, in the Orion Spur. NASA commonly rounds this to 26,000 light-years; ESA material gives about 26,600 light-years. Use a rounded value and record which source a production data revision follows.
 - At 30,000 light-years of visible width, retain the Sun-centered framing; the Galactic Center lies beyond the half-width, so do not show it as if already inside the frame.
-- As the view grows toward 90,000 light-years, smoothly shift the camera target toward the Galactic Center and rotate into a face-on reconstructed view. Keep the Sun and a “You are here” marker visible at its actual offset from the center.
+- As the view grows toward 90,000 light-years, smoothly shift the camera target toward the Galactic Center. The local stellar field and galactic model share a face-on disk-plane orientation, so keep that orientation continuous rather than adding an abrupt turn. Keep the Sun and a “You are here” marker visible at its actual offset from the center.
 - Finish near 150,000 light-years with the galactic center legible and most of the stellar disk inside frame. If an adjustment is needed to fit the full disk, change framing while preserving the stated visible width and physical Sun-to-center offset.
 - Treat the face-on exterior composition as a visualization reframe, not a literal claim that the traveler followed a simple straight path to an external position. Avoid a sudden crossfade or a galaxy image that appears disconnected from the local star field.
 
@@ -38,11 +38,11 @@ The Milky Way cannot be photographed from outside. Show the external view as **R
 
 ## Implementation sequence
 
-1. Add galactic coordinate and scale data separately from renderer code, including a source and uncertainty note for the Sun's galactocentric distance and the approximate disk size.
-2. Build a reusable galactic renderer with a Sun marker, Orion Spur, central bar/bulge, spiral-arm density, dust/gas layers, and optional diffuse halo.
-3. Use a few scale-aware levels of detail across 10,000, 30,000, 90,000, and 150,000 light-years. Blend the Milky Way structure into the existing local-region star field instead of replacing it with a separate slide.
-4. Implement the gradual camera target shift and rotation toward a face-on reconstructed view while keeping the Sun marker at the correct galactic offset.
-5. Add the Milky Way destination stop only after the local-region handoff is coherent; keep existing 18-stop order and the 150,000-light-year visible-width target.
+1. Add galactic coordinates and scale data separately from the renderer, with source and uncertainty notes for the Sun's galactocentric distance and the approximate disk size.
+2. Build a reusable galactic renderer with a Sun marker, Orion Spur, central bar/bulge, spiral-arm density, and diffuse halo.
+3. Reveal scale-aware layers from the 10,000-light-year local scene through 30,000, 90,000, and 150,000 light-years, blending the Milky Way into the existing star field.
+4. Ease the camera target toward the face-on reconstructed view while keeping the disk-plane orientation continuous and the Sun marker at the correct galactic offset.
+5. Add one selectable Milky Way destination after the Local Galactic Region, retaining the planned itinerary order and 150,000-light-year visible-width target.
 6. Capture and inspect forward and reverse transitions plus every new frame on desktop, iPad portrait, and phone.
 
 ## Acceptance checks
@@ -62,4 +62,4 @@ The Milky Way cannot be photographed from outside. Show the external view as **R
 - ESA, [Guide to our galaxy](https://www.esa.int/content/view/full/423444) — barred-spiral structure and approximate Sun-to-center distance.
 - ESA, [Top-down view of the Milky Way](https://www.esa.int/ESA_Multimedia/Images/2023/12/Top-down_view_of_the_Milky_Way) — explicitly identifies the external view as an illustration/reconstruction because the Galaxy cannot be photographed from outside.
 
-Recheck source values and image/data attribution when the scene is implemented. Published descriptions may use different conventions for the stellar disk's diameter and the Solar System's distance from the Galactic Center.
+Recheck source values and image/data attribution when production data is revised. Published descriptions may use different conventions for the stellar disk's diameter and the Solar System's distance from the Galactic Center.

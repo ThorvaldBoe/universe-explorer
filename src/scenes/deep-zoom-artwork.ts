@@ -95,7 +95,12 @@ export class DeepZoomArtwork {
     image.style.opacity = String(clamp01(opacity));
   }
 
+  setOpacity(opacity: number) {
+    this.root.style.opacity = String(clamp01(opacity));
+  }
+
   showEarthFrame(index: number) {
+    this.setOpacity(1);
     const frame = earthZoomFrames[THREE.MathUtils.clamp(Math.round(index), 0, earthZoomFrames.length - 1)];
     const src = assetUrl(frame.filename);
     this.setImage(this.back, src, 'back');
@@ -112,6 +117,7 @@ export class DeepZoomArtwork {
 
   /** Render a factor-of-three image handoff; the central tile remains registered throughout. */
   showEarthTransition(fromIndex: number, toIndex: number, progress: number) {
+    this.setOpacity(1);
     const p = clamp01(progress);
     this.root.style.background = 'transparent';
     const index = THREE.MathUtils.clamp(fromIndex + (toIndex - fromIndex) * p, 0, earthZoomFrames.length - 1);
@@ -204,6 +210,7 @@ export class DeepZoomArtwork {
   }
 
   showSceneOnly() {
+    this.setOpacity(1);
     this.transform(this.back, 1, 0);
     this.transform(this.front, 1, 0);
     this.transform(this.moonSky, 1, 0);

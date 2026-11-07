@@ -54,7 +54,7 @@ h1 { margin: 1rem 0 .7rem; font-size: clamp(2.6rem, 5.2vw, 4.5rem); line-height:
 .controls .dot { width: 5px; height: 5px; min-height: 5px; padding: 0; border: 0; }
 .dot.current { width: 21px; border-radius: 8px; background: #c9dcff; }
 .controls .dot.current { width: 21px; }
-@media (max-width: 650px) {
+@media (max-width: 900px) {
   .topbar { height: 68px; }.topbar-note { display: none; }
   .text-toggle { gap: .45rem; padding: .5rem .65rem; }
   .stage { display: flex; flex-direction: column; justify-content: center; align-items: stretch; gap: .45rem; min-height: 0; padding: .6rem 0; }

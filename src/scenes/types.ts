@@ -8,6 +8,9 @@ export interface SceneUpdateContext {
   activeRenderer?: RendererKind;
   camera?: Camera;
   viewportHeight?: number;
+  transitionFromRenderer?: RendererKind;
+  transitionToRenderer?: RendererKind;
+  transitionProgress?: number;
 }
 
 export interface SceneRenderer {
