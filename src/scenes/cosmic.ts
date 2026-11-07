@@ -7,6 +7,7 @@ import type { SceneRenderer, SceneUpdateContext } from './types';
 type Label = { element: HTMLSpanElement; positionLy: THREE.Vector3; minWidthLy: number; maxWidthLy: number; offset: [number, number] };
 type FlowPath = { points: THREE.Vector3[]; color: string };
 type WebPath = { points: THREE.Vector3[]; color: string; alpha: number };
+type ObservablePoint = { position: THREE.Vector3; radiusRatio: number };
 
 function seeded(seed: number) {
   let state = seed >>> 0;
@@ -72,6 +73,20 @@ export const cosmicRenderer: SceneRenderer = {
       webPaths.push({ points: curve.getPoints(18), color: index % 5 === 0 ? '#a28cef' : '#5f91ca', alpha: .22 });
     });
 
+    const wideWebPaths: WebPath[] = webPaths.map((path) => ({
+      points: path.points.map((point) => point.clone().multiplyScalar(5)),
+      color: path.color,
+      alpha: path.alpha * .72,
+    }));
+    const wideWebNodes = nodes.map((node) => node.clone().multiplyScalar(5));
+    const observableRadiusLy = 46_500_000_000;
+    const observableRandom = seeded(9302026);
+    const observablePoints: ObservablePoint[] = Array.from({ length: 1800 }, () => {
+      const direction = new THREE.Vector3(observableRandom() * 2 - 1, observableRandom() * 2 - 1, observableRandom() * 2 - 1).normalize();
+      const radiusRatio = Math.cbrt(observableRandom());
+      return { position: direction.multiplyScalar(observableRadiusLy * radiusRatio), radiusRatio };
+    });
+
     const labelLayer = document.createElement('div');
     labelLayer.className = 'stellar-label-layer cosmic-label-layer';
     labelLayer.setAttribute('aria-hidden', 'true');
@@ -93,6 +108,10 @@ export const cosmicRenderer: SceneRenderer = {
     group.userData.flowPaths = flowPaths;
     group.userData.webPaths = webPaths;
     group.userData.webNodes = nodes;
+    group.userData.wideWebPaths = wideWebPaths;
+    group.userData.wideWebNodes = wideWebNodes;
+    group.userData.observablePoints = observablePoints;
+    group.userData.observableRadiusLy = observableRadiusLy;
     group.userData.labels = labels;
     group.userData.labelLayer = labelLayer;
     return group;
@@ -107,10 +126,15 @@ export const cosmicRenderer: SceneRenderer = {
       ? THREE.MathUtils.smoothstep(progress, .08, .78)
       : leaving ? 1 - THREE.MathUtils.smoothstep(progress, .22, .86) : active ? 1 : 0;
     const widthLy = (context.visibleWidthKm ?? LIGHT_YEAR_KM * 100_000_000) / LIGHT_YEAR_KM;
-    const clusterOpacity = transitionOpacity * THREE.MathUtils.smoothstep(widthLy, 8_000_000, 35_000_000);
+    const clusterOpacity = transitionOpacity * THREE.MathUtils.smoothstep(widthLy, 8_000_000, 35_000_000)
+      * (1 - THREE.MathUtils.smoothstep(widthLy, 1_500_000_000, 4_000_000_000));
     const flowOpacity = transitionOpacity * THREE.MathUtils.smoothstep(widthLy, 65_000_000, 250_000_000)
       * (1 - THREE.MathUtils.smoothstep(widthLy, 700_000_000, 1_100_000_000));
-    const webOpacity = transitionOpacity * THREE.MathUtils.smoothstep(widthLy, 700_000_000, 1_400_000_000);
+    const webOpacity = transitionOpacity * THREE.MathUtils.smoothstep(widthLy, 700_000_000, 1_400_000_000)
+      * (1 - THREE.MathUtils.smoothstep(widthLy, 2_000_000_000, 5_000_000_000));
+    const wideWebOpacity = transitionOpacity * THREE.MathUtils.smoothstep(widthLy, 2_000_000_000, 7_000_000_000)
+      * (1 - THREE.MathUtils.smoothstep(widthLy, 18_000_000_000, 35_000_000_000));
+    const observableOpacity = transitionOpacity * THREE.MathUtils.smoothstep(widthLy, 38_000_000_000, 65_000_000_000);
     const visible = active || entering || leaving;
     group.visible = false; // All billion-light-year artwork is rendered in camera-relative screen coordinates below.
 
@@ -187,6 +211,65 @@ export const cosmicRenderer: SceneRenderer = {
       for (const point of group.userData.webNodes as THREE.Vector3[] | undefined ?? []) {
         const screen = project(point);
         if (screen && screen.x >= 0 && screen.x <= width && screen.y >= 0 && screen.y <= height) drawing.fillRect(screen.x - 1, screen.y - 1, 2, 2);
+      }
+    }
+
+    if (wideWebOpacity > .005) {
+      for (const path of group.userData.wideWebPaths as WebPath[]) {
+        drawing.globalAlpha = wideWebOpacity * path.alpha;
+        drawing.beginPath();
+        let started = false;
+        for (const point of path.points) {
+          const screen = project(point);
+          if (!screen || screen.x < -width || screen.x > width * 2 || screen.y < -height || screen.y > height * 2) { started = false; continue; }
+          if (!started) { drawing.moveTo(screen.x, screen.y); started = true; }
+          else drawing.lineTo(screen.x, screen.y);
+        }
+        drawing.strokeStyle = path.color;
+        drawing.lineWidth = 1;
+        drawing.stroke();
+      }
+      drawing.globalAlpha = wideWebOpacity * .75;
+      drawing.fillStyle = '#c8dcff';
+      for (const point of group.userData.wideWebNodes as THREE.Vector3[]) {
+        const screen = project(point);
+        if (screen && screen.x >= 0 && screen.x <= width && screen.y >= 0 && screen.y <= height) drawing.fillRect(screen.x - .75, screen.y - .75, 1.5, 1.5);
+      }
+    }
+
+    if (observableOpacity > .005) {
+      drawing.globalAlpha = observableOpacity;
+      for (const item of group.userData.observablePoints as ObservablePoint[]) {
+        const screen = project(item.position);
+        if (!screen || screen.x < 0 || screen.x > width || screen.y < 0 || screen.y > height) continue;
+        const hue = 210 - item.radiusRatio * 185;
+        drawing.fillStyle = `hsla(${hue}, 72%, 72%, ${.18 + item.radiusRatio * .45})`;
+        drawing.fillRect(screen.x, screen.y, item.radiusRatio > .92 ? 1.5 : 1, item.radiusRatio > .92 ? 1.5 : 1);
+      }
+
+      const observer = project(new THREE.Vector3());
+      const radiusLy = group.userData.observableRadiusLy as number;
+      const cameraDistanceLy = cameraOffsetLy.length();
+      if (observer && cameraDistanceLy > radiusLy) {
+        const apparentRadius = focalPixels * radiusLy / Math.sqrt(cameraDistanceLy ** 2 - radiusLy ** 2);
+        const horizon = drawing.createRadialGradient(observer.x, observer.y, apparentRadius * .72, observer.x, observer.y, apparentRadius);
+        horizon.addColorStop(0, 'rgba(43, 71, 125, .015)');
+        horizon.addColorStop(.88, 'rgba(82, 134, 207, .05)');
+        horizon.addColorStop(1, 'rgba(126, 194, 255, .17)');
+        drawing.fillStyle = horizon;
+        drawing.beginPath(); drawing.arc(observer.x, observer.y, apparentRadius, 0, Math.PI * 2); drawing.fill();
+        drawing.save();
+        drawing.setLineDash([3, 7]);
+        drawing.strokeStyle = 'rgba(157, 211, 255, .68)';
+        drawing.lineWidth = 1.15;
+        drawing.shadowColor = 'rgba(102, 182, 255, .65)';
+        drawing.shadowBlur = 9;
+        drawing.beginPath(); drawing.arc(observer.x, observer.y, apparentRadius, 0, Math.PI * 2); drawing.stroke();
+        drawing.restore();
+        drawing.textAlign = 'center';
+        drawing.font = '600 10px Inter, ui-sans-serif, system-ui, sans-serif';
+        drawing.fillStyle = 'rgba(204, 224, 255, .92)';
+        drawing.fillText('OBSERVABLE HORIZON · ~46.5 BILLION LIGHT-YEARS RADIUS', observer.x, observer.y - apparentRadius + 20);
       }
     }
 

@@ -131,24 +131,28 @@ function localGroupStop(): Stop {
 
 function cosmicStructureStop(frameIndex: number): Stop {
   const frame = COSMIC_STRUCTURE_FRAMES[frameIndex];
-  const focusLy: [number, number, number] = [
-    COSMIC_STRUCTURE_ANCHORS[1].positionLy[0] / 2,
-    COSMIC_STRUCTURE_ANCHORS[1].positionLy[1] / 2,
-    COSMIC_STRUCTURE_ANCHORS[1].positionLy[2] / 2,
-  ];
+  const focusLy: [number, number, number] = 'focusLy' in frame && frame.focusLy
+    ? [...frame.focusLy]
+    : [
+      COSMIC_STRUCTURE_ANCHORS[1].positionLy[0] / 2,
+      COSMIC_STRUCTURE_ANCHORS[1].positionLy[1] / 2,
+      COSMIC_STRUCTURE_ANCHORS[1].positionLy[2] / 2,
+    ];
   const focusPositionKm: [number, number, number] = [
     GALACTIC_CENTER_POSITION_KM[0] + focusLy[0] * LIGHT_YEAR_KM,
     GALACTIC_CENTER_POSITION_KM[1] + focusLy[1] * LIGHT_YEAR_KM,
     GALACTIC_CENTER_POSITION_KM[2] + focusLy[2] * LIGHT_YEAR_KM,
   ];
   const frameWidthMeters = COSMIC_STRUCTURE_VIEW_WIDTH_METERS[frameIndex];
+  const cameraFrameWidthLy = 'cameraFrameWidthLy' in frame ? frame.cameraFrameWidthLy ?? frame.widthLy : frame.widthLy;
+  const cameraFrameWidthMeters = cameraFrameWidthLy * LIGHT_YEAR_METERS;
   return {
     id: frame.id,
-    chapter: '07 · Cosmic Structures',
+    chapter: frameIndex >= 3 ? '08 · Observable Universe' : '07 · Cosmic Structures',
     title: frame.title,
     introduction: frame.introduction,
     visibleWidthMeters: frameWidthMeters,
-    cameraFrameWidthMeters: frameWidthMeters,
+    cameraFrameWidthMeters,
     scaleLabel: frame.viewLabel,
     renderer: 'cosmological',
     provenance: 'reconstructed',

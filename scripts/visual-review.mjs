@@ -11,6 +11,7 @@ const stops = [
   'The inner Solar System', 'The planetary Solar System', 'Beyond Neptune', 'The Oort Cloud',
   'The nearest stars', 'The stellar neighborhood', 'The local galactic region', 'The Milky Way', 'The Local Group',
   'Virgo and Nearby Groups', 'Laniakea', 'The Cosmic Web',
+  'Large-scale Universe', 'The Observable Universe',
 ];
 const browserErrors = [];
 await mkdir(artifactDir, { recursive: true });
