@@ -2,7 +2,7 @@
 
 A browser-based journey from Earth to the observable universe. See [initial-spec.md](initial-spec.md) for product and scientific goals, and [Visual journey and imagery principles](docs/visual-journey-and-imagery.md) for production lessons from the Earth-to-Moon pilot.
 
-The Solar System, Stars, and planned Milky Way chapter storyboards are documented in [Solar System storyboard](docs/solar-system-storyboard.md), [Stellar neighborhood storyboard](docs/stellar-neighborhood-storyboard.md), and [Milky Way storyboard](docs/milky-way-storyboard.md).
+The Solar System, Stars, Milky Way, and Local Group storyboards are documented in [Solar System storyboard](docs/solar-system-storyboard.md), [Stellar neighborhood storyboard](docs/stellar-neighborhood-storyboard.md), [Milky Way storyboard](docs/milky-way-storyboard.md), and [Local Group storyboard](docs/local-group-storyboard.md).
 
 ## Live preview
 
@@ -24,7 +24,7 @@ The Solar System, Stars, and planned Milky Way chapter storyboards are documente
 1. Read the relevant specification and inspect the existing code before changing it.
 2. Agree on a small milestone and acceptance criteria. Prefer reusable modules and data-driven content over scene-specific shortcuts.
 3. Keep scientific facts, units, provenance, and references separate from rendering and interface code.
-4. Implement incrementally. For the initial release, prioritize Phase 0 and the four-scene Phase 1 proof of concept. The current vertical slice continues from the Earth-to-Moon journey through the Solar System into the nearest stars and Local Galactic Region. Validate camera motion and scene handoffs before expanding to all 18 stops.
+4. Implement incrementally. For the initial release, prioritize Phase 0 and the four-scene Phase 1 proof of concept. The current vertical slice continues from the Earth-to-Moon journey through the Solar System, nearby stars, the Milky Way, and the Local Group. Validate camera motion and scene handoffs before expanding to all 18 stops.
 5. Run the checks relevant to the change, exercise the affected user flow, and report what was and was not verified in the pull request.
 6. Update documentation, source/asset attribution, and this README when the change alters project conventions.
 7. After the Phase 1 vertical slice, report performance observations, visual limitations, remaining risks, and proposed next milestones before expanding scope.
@@ -45,6 +45,7 @@ Every pull request runs the production build and a headless Chromium review of e
 - The Solar System renderer keeps physical body radii and mean orbital distances in kilometers. Orbit paths and representative phases are schematic and coplanar; body markers and labels are enlarged presentation aids. The diffuse Oort Cloud is hypothetical and explicitly labeled as speculative.
 - The stellar neighborhood renderer uses SIMBAD ICRS J2000 coordinates and parallaxes for its selected named stars, rendered as fixed-size markers. Its 10,000-light-year local-arm density and nebula layer is a deterministic reconstruction, not an observed or catalogue-complete map.
 - The Milky Way renderer is a deterministic barred-spiral reconstruction in a Sun-centered galactic coordinate frame. Its 150,000-light-year view width is a framing target, not a precise galactic diameter; the Sun-to-center distance and star markers are presentation anchors, and the procedural density is not a measured catalogue.
+- The Local Group renderer keeps the Milky Way at the shared galactic origin and uses approximate observed directions and distances for Andromeda and Triangulum. Its 10-million-light-year view width is a framing target; the diffuse dwarf-galaxy field, galaxy disks, and enhanced markers are illustrative rather than a complete catalogue or a literal brightness-scale view.
 
 ### Scale references
 

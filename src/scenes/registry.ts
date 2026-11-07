@@ -5,6 +5,7 @@ import { solarSystemRenderer } from './solar-system';
 import { stellarRenderer } from './stellar';
 import { lunarRenderer } from './lunar';
 import { galacticRenderer } from './galactic';
+import { localGroupRenderer } from './local-group';
 import { cosmicRenderer } from './cosmic';
 
 export const sceneRenderers: Partial<Record<RendererKind, SceneRenderer>> = {
@@ -13,5 +14,6 @@ export const sceneRenderers: Partial<Record<RendererKind, SceneRenderer>> = {
   stellar: stellarRenderer,
   lunar: lunarRenderer,
   galactic: galacticRenderer,
+  'local-group': localGroupRenderer,
   cosmological: cosmicRenderer,
 };
