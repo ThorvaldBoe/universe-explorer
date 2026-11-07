@@ -5,6 +5,7 @@ import {
 import { LIGHT_YEAR_KM, LIGHT_YEAR_METERS, SUN_ANCHOR_KM } from './stellar-neighborhood';
 import { GALACTIC_CENTER_POSITION_KM, MILKY_WAY_VIEW_WIDTH_METERS } from './milky-way';
 import { LOCAL_GROUP_FRAME_CENTER_LY, LOCAL_GROUP_VIEW_WIDTH_METERS } from './local-group';
+import { COSMIC_STRUCTURE_ANCHORS, COSMIC_STRUCTURE_FRAMES, COSMIC_STRUCTURE_VIEW_WIDTH_METERS } from './cosmic-structures';
 
 const EARTH_LATITUDE = Math.PI / 4;
 const MOON_SITE_LATITUDE = Math.PI / 4;
@@ -128,6 +129,37 @@ function localGroupStop(): Stop {
   };
 }
 
+function cosmicStructureStop(frameIndex: number): Stop {
+  const frame = COSMIC_STRUCTURE_FRAMES[frameIndex];
+  const focusLy: [number, number, number] = [
+    COSMIC_STRUCTURE_ANCHORS[1].positionLy[0] / 2,
+    COSMIC_STRUCTURE_ANCHORS[1].positionLy[1] / 2,
+    COSMIC_STRUCTURE_ANCHORS[1].positionLy[2] / 2,
+  ];
+  const focusPositionKm: [number, number, number] = [
+    GALACTIC_CENTER_POSITION_KM[0] + focusLy[0] * LIGHT_YEAR_KM,
+    GALACTIC_CENTER_POSITION_KM[1] + focusLy[1] * LIGHT_YEAR_KM,
+    GALACTIC_CENTER_POSITION_KM[2] + focusLy[2] * LIGHT_YEAR_KM,
+  ];
+  const frameWidthMeters = COSMIC_STRUCTURE_VIEW_WIDTH_METERS[frameIndex];
+  return {
+    id: frame.id,
+    chapter: '07 · Cosmic Structures',
+    title: frame.title,
+    introduction: frame.introduction,
+    visibleWidthMeters: frameWidthMeters,
+    cameraFrameWidthMeters: frameWidthMeters,
+    scaleLabel: frame.viewLabel,
+    renderer: 'cosmological',
+    provenance: 'reconstructed',
+    cameraPositionKm: [focusPositionKm[0], focusPositionKm[1], focusPositionKm[2] + 1],
+    focusPositionKm,
+    lookAtPositionKm: [...focusPositionKm],
+    cameraUp: [0, 1, 0],
+    cameraFovDegrees: 45,
+  };
+}
+
 function earthStop(
   id: string, chapter: string, title: string, introduction: string,
   altitudeKm: number, visibleWidthMeters: number, scaleLabel: string,
@@ -219,4 +251,5 @@ export const stops: Stop[] = [
   ),
   galacticStop(),
   localGroupStop(),
+  ...COSMIC_STRUCTURE_FRAMES.map((_, index) => cosmicStructureStop(index)),
 ];

@@ -1,35 +1,219 @@
 import * as THREE from 'three';
-import type { SceneRenderer } from './types';
+import { COSMIC_STRUCTURE_ANCHORS } from '../data/cosmic-structures';
+import { GALACTIC_CENTER_POSITION_KM } from '../data/milky-way';
+import { LIGHT_YEAR_KM } from '../data/stellar-neighborhood';
+import type { SceneRenderer, SceneUpdateContext } from './types';
+
+type Label = { element: HTMLSpanElement; positionLy: THREE.Vector3; minWidthLy: number; maxWidthLy: number; offset: [number, number] };
+type FlowPath = { points: THREE.Vector3[]; color: string };
+type WebPath = { points: THREE.Vector3[]; color: string; alpha: number };
 
 function seeded(seed: number) {
   let state = seed >>> 0;
-  return () => { state = (state * 1664525 + 1013904223) >>> 0; return state / 4294967296; };
+  return () => { state = (1664525 * state + 1013904223) >>> 0; return state / 4294967296; };
 }
+
+function makeLabel(text: string) {
+  const element = document.createElement('span');
+  element.className = 'stellar-label stellar-label-region cosmic-label';
+  element.textContent = text;
+  element.hidden = true;
+  return element;
+}
+
+/** Named cluster positions use observed direction/distance anchors. Cluster haze,
+ * Laniakea flow paths, and the wide cosmic web are explicitly schematic. */
 export const cosmicRenderer: SceneRenderer = {
   kind: 'cosmological',
-  cameraDistance: 10,
+  cameraDistance: 1,
   create() {
-    const group = new THREE.Group(), random = seeded(41021), nodes: THREE.Vector3[] = [];
-    const nodePositions: number[] = [], linePositions: number[] = [];
-    for (let i = 0; i < 220; i++) {
-      const p = new THREE.Vector3((random() - .5) * 9, (random() - .5) * 5.5, (random() - .5) * 5.5);
-      nodes.push(p); nodePositions.push(p.x, p.y, p.z);
-    }
-    for (let i = 0; i < nodes.length; i++) {
-      const nearby = nodes.map((point, index) => ({ index, distance: point.distanceToSquared(nodes[i]) }))
-        .filter((item) => item.index > i).sort((a, b) => a.distance - b.distance).slice(0, 2);
-      for (const item of nearby) {
-        if (item.distance > 3.6) continue;
-        const p = nodes[item.index], q = nodes[i];
-        linePositions.push(p.x, p.y, p.z, q.x, q.y, q.z);
-      }
-    }
-    const lines = new THREE.BufferGeometry(); lines.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
-    group.add(new THREE.LineSegments(lines, new THREE.LineBasicMaterial({ color: 0x547fbc, transparent: true, opacity: .34, depthWrite: false })));
-    const points = new THREE.BufferGeometry(); points.setAttribute('position', new THREE.Float32BufferAttribute(nodePositions, 3));
-    group.add(new THREE.Points(points, new THREE.PointsMaterial({ color: 0xd9e8ff, size: .055, transparent: true, opacity: .85, depthWrite: false })));
-    group.scale.setScalar(2.1e21);
+    const group = new THREE.Group();
+    const canvas = document.createElement('canvas');
+    canvas.className = 'cosmic-canvas';
+    canvas.setAttribute('aria-hidden', 'true');
+    document.querySelector('.scene-wrap')?.append(canvas);
+
+    const anchorVectors = COSMIC_STRUCTURE_ANCHORS.map((anchor) => new THREE.Vector3(...anchor.positionLy));
+    const random = seeded(20261107);
+    const clusterClouds = COSMIC_STRUCTURE_ANCHORS.slice(1).flatMap((anchor) => {
+      const center = new THREE.Vector3(...anchor.positionLy);
+      const color = `#${anchor.color.toString(16).padStart(6, '0')}`;
+      return Array.from({ length: 260 }, () => {
+        const direction = new THREE.Vector3(random() * 2 - 1, random() * 2 - 1, random() * 2 - 1).normalize();
+        return { position: center.clone().addScaledVector(direction, anchor.radiusLy * Math.pow(random(), 1.7)), color };
+      });
+    });
+
+    const flowPaths: FlowPath[] = [];
+    const origin = anchorVectors[0];
+    anchorVectors.slice(1).forEach((destination, index) => {
+      const bend = new THREE.Vector3(-destination.y, destination.x, destination.z * .22).normalize()
+        .multiplyScalar(destination.length() * (index === 1 ? .19 : -.12));
+      const curve = new THREE.QuadraticBezierCurve3(origin.clone(), destination.clone().multiplyScalar(.5).add(bend), destination.clone());
+      flowPaths.push({ points: curve.getPoints(44), color: index === 0 ? '#ffc08b' : '#78aeea' });
+    });
+
+    const nodes = [
+      [-900, -260, -480], [-580, -60, -150], [-230, 140, 160], [130, -40, 500], [480, 180, 100], [850, 280, -350],
+      [-700, 350, 300], [-330, 500, 550], [20, 500, -360], [390, -420, 620], [770, -250, 460], [600, -520, -420],
+    ].map(([x, y, z]) => new THREE.Vector3(x * 1_000_000, y * 1_000_000, z * 1_000_000));
+    const webPaths: WebPath[] = [];
+    // A small set of coherent, branching filaments leaves broad voids between strands.
+    // This is a visual reconstruction, not a sampled or measured galaxy catalogue.
+    const edges: [number, number, [number, number, number]][] = [
+      [0, 1, [0, 55, 30]], [1, 2, [20, 30, -35]], [2, 3, [45, -20, 30]], [3, 4, [15, 40, 50]], [4, 5, [-30, 25, -45]],
+      [0, 6, [-30, 40, 20]], [6, 7, [45, 20, -25]], [7, 2, [25, -20, 30]], [2, 8, [-40, 50, 20]], [8, 4, [30, 25, -45]],
+      [3, 9, [-20, -35, 40]], [9, 10, [25, 10, 35]], [10, 5, [-35, 40, -10]], [4, 11, [20, -30, 40]], [11, 5, [-30, 25, -20]],
+    ];
+    edges.forEach(([from, to, bend], index) => {
+      const start = nodes[from]; const end = nodes[to];
+      const midpoint = start.clone().lerp(end, .5).add(new THREE.Vector3(...bend).multiplyScalar(1_000_000));
+      const curve = new THREE.QuadraticBezierCurve3(start, midpoint, end);
+      webPaths.push({ points: curve.getPoints(18), color: index % 5 === 0 ? '#a28cef' : '#5f91ca', alpha: .22 });
+    });
+
+    const labelLayer = document.createElement('div');
+    labelLayer.className = 'stellar-label-layer cosmic-label-layer';
+    labelLayer.setAttribute('aria-hidden', 'true');
+    const labels: Label[] = [
+      { element: makeLabel('LOCAL GROUP'), positionLy: anchorVectors[0], minWidthLy: 25_000_000, maxWidthLy: 750_000_000, offset: [42, -18] },
+      { element: makeLabel('VIRGO CLUSTER · M87'), positionLy: anchorVectors[1], minWidthLy: 25_000_000, maxWidthLy: 750_000_000, offset: [0, 23] },
+      { element: makeLabel('FORNAX CLUSTER'), positionLy: anchorVectors[2], minWidthLy: 45_000_000, maxWidthLy: 750_000_000, offset: [0, -22] },
+      { element: makeLabel('CENTAURUS CLUSTER'), positionLy: anchorVectors[3], minWidthLy: 130_000_000, maxWidthLy: 750_000_000, offset: [0, 22] },
+    ];
+    labels.forEach(({ element }) => labelLayer.append(element));
+    document.querySelector('.scene-wrap')?.append(labelLayer);
+
+    group.position.set(...GALACTIC_CENTER_POSITION_KM);
+    group.userData.worldPosition = group.position.clone();
+    group.userData.canvas = canvas;
+    group.userData.anchors = COSMIC_STRUCTURE_ANCHORS;
+    group.userData.anchorVectors = anchorVectors;
+    group.userData.clusterClouds = clusterClouds;
+    group.userData.flowPaths = flowPaths;
+    group.userData.webPaths = webPaths;
+    group.userData.webNodes = nodes;
+    group.userData.labels = labels;
+    group.userData.labelLayer = labelLayer;
     return group;
   },
-  update(group, elapsed) { group.rotation.y = elapsed * .025; group.rotation.x = Math.sin(elapsed * .06) * .02; },
+  update(group, _elapsed, context?: SceneUpdateContext) {
+    if (!context) return;
+    const entering = context.transitionToRenderer === 'cosmological' && context.transitionFromRenderer !== 'cosmological';
+    const leaving = context.transitionFromRenderer === 'cosmological' && context.transitionToRenderer !== 'cosmological';
+    const active = context.activeRenderer === 'cosmological';
+    const progress = context.transitionProgress ?? 1;
+    const transitionOpacity = entering
+      ? THREE.MathUtils.smoothstep(progress, .08, .78)
+      : leaving ? 1 - THREE.MathUtils.smoothstep(progress, .22, .86) : active ? 1 : 0;
+    const widthLy = (context.visibleWidthKm ?? LIGHT_YEAR_KM * 100_000_000) / LIGHT_YEAR_KM;
+    const clusterOpacity = transitionOpacity * THREE.MathUtils.smoothstep(widthLy, 8_000_000, 35_000_000);
+    const flowOpacity = transitionOpacity * THREE.MathUtils.smoothstep(widthLy, 65_000_000, 250_000_000)
+      * (1 - THREE.MathUtils.smoothstep(widthLy, 700_000_000, 1_100_000_000));
+    const webOpacity = transitionOpacity * THREE.MathUtils.smoothstep(widthLy, 700_000_000, 1_400_000_000);
+    const visible = active || entering || leaving;
+    group.visible = false; // All billion-light-year artwork is rendered in camera-relative screen coordinates below.
+
+    const canvas = group.userData.canvas as HTMLCanvasElement;
+    const width = context.viewportWidth ?? canvas.clientWidth;
+    const height = context.viewportHeight ?? canvas.clientHeight;
+    const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
+    if (canvas.width !== Math.round(width * ratio) || canvas.height !== Math.round(height * ratio)) {
+      canvas.width = Math.max(1, Math.round(width * ratio));
+      canvas.height = Math.max(1, Math.round(height * ratio));
+    }
+    const drawing = canvas.getContext('2d');
+    const labelLayer = group.userData.labelLayer as HTMLDivElement;
+    labelLayer.hidden = !visible;
+    if (!drawing) return;
+    drawing.setTransform(ratio, 0, 0, ratio, 0, 0);
+    drawing.clearRect(0, 0, width, height);
+    canvas.hidden = !visible;
+    if (!visible || !context.camera) return;
+
+    const inverseRotation = context.camera.quaternion.clone().invert();
+    const cameraOffsetLy = context.cameraWorldPosition.clone().sub(new THREE.Vector3(...GALACTIC_CENTER_POSITION_KM)).multiplyScalar(1 / LIGHT_YEAR_KM);
+    const focalPixels = height / (2 * Math.tan(THREE.MathUtils.degToRad((context.camera as THREE.PerspectiveCamera).fov) / 2));
+    const project = (positionLy: THREE.Vector3) => {
+      const cameraPoint = positionLy.clone().sub(cameraOffsetLy).applyQuaternion(inverseRotation);
+      const depth = -cameraPoint.z;
+      if (depth <= 0) return undefined;
+      return { x: width / 2 + cameraPoint.x / depth * focalPixels, y: height / 2 - cameraPoint.y / depth * focalPixels, depth };
+    };
+
+    // Diffuse cluster hints are enhanced markers, not edges or completeness claims.
+    drawing.globalAlpha = clusterOpacity * .32;
+    for (const cloud of group.userData.clusterClouds as { position: THREE.Vector3; color: string }[]) {
+      const point = project(cloud.position);
+      if (!point || point.x < -2 || point.x > width + 2 || point.y < -2 || point.y > height + 2) continue;
+      drawing.fillStyle = cloud.color;
+      drawing.fillRect(point.x, point.y, 1.2, 1.2);
+    }
+
+    if (flowOpacity > .005) {
+      drawing.globalAlpha = flowOpacity * .56;
+      drawing.lineWidth = 1.15;
+      for (const path of group.userData.flowPaths as FlowPath[]) {
+        drawing.beginPath();
+        let started = false;
+        for (const point of path.points) {
+          const screen = project(point);
+          if (!screen || screen.x < -width || screen.x > width * 2 || screen.y < -height || screen.y > height * 2) { started = false; continue; }
+          if (!started) { drawing.moveTo(screen.x, screen.y); started = true; }
+          else drawing.lineTo(screen.x, screen.y);
+        }
+        drawing.strokeStyle = path.color;
+        drawing.stroke();
+      }
+    }
+
+    if (webOpacity > .005) {
+      for (const path of group.userData.webPaths as WebPath[]) {
+        drawing.globalAlpha = webOpacity * path.alpha;
+        drawing.beginPath();
+        let started = false;
+        for (const point of path.points) {
+          const screen = project(point);
+          if (!screen || screen.x < -width || screen.x > width * 2 || screen.y < -height || screen.y > height * 2) { started = false; continue; }
+          if (!started) { drawing.moveTo(screen.x, screen.y); started = true; }
+          else drawing.lineTo(screen.x, screen.y);
+        }
+        drawing.strokeStyle = path.color;
+        drawing.lineWidth = 1;
+        drawing.stroke();
+      }
+      drawing.globalAlpha = webOpacity * .8;
+      drawing.fillStyle = '#d4e3ff';
+      for (const point of group.userData.webNodes as THREE.Vector3[] | undefined ?? []) {
+        const screen = project(point);
+        if (screen && screen.x >= 0 && screen.x <= width && screen.y >= 0 && screen.y <= height) drawing.fillRect(screen.x - 1, screen.y - 1, 2, 2);
+      }
+    }
+
+    drawing.globalAlpha = clusterOpacity;
+    for (const [index, anchor] of COSMIC_STRUCTURE_ANCHORS.entries()) {
+      const point = project(new THREE.Vector3(...anchor.positionLy));
+      if (!point || point.x < -16 || point.x > width + 16 || point.y < -16 || point.y > height + 16) continue;
+      const radius = index === 0 ? 3.2 : 4;
+      const color = `#${anchor.color.toString(16).padStart(6, '0')}`;
+      const glow = drawing.createRadialGradient(point.x, point.y, .5, point.x, point.y, radius * 3.5);
+      glow.addColorStop(0, color); glow.addColorStop(1, `${color}00`);
+      drawing.fillStyle = glow; drawing.beginPath(); drawing.arc(point.x, point.y, radius * 3.5, 0, Math.PI * 2); drawing.fill();
+      drawing.fillStyle = color; drawing.beginPath(); drawing.arc(point.x, point.y, radius, 0, Math.PI * 2); drawing.fill();
+    }
+
+    for (const label of group.userData.labels as Label[]) {
+      if (widthLy < label.minWidthLy || widthLy > label.maxWidthLy || clusterOpacity < .05) { label.element.hidden = true; continue; }
+      const point = project(label.positionLy);
+      const x = point ? point.x + label.offset[0] : 0;
+      const y = point ? point.y + label.offset[1] : 0;
+      const inFrame = point && x > 4 && x < width - 4 && y > 55 && y < height - 4;
+      label.element.hidden = !inFrame;
+      if (!inFrame || !point) continue;
+      label.element.style.left = `${x}px`;
+      label.element.style.top = `${y}px`;
+      label.element.style.opacity = String(clusterOpacity);
+    }
+    drawing.globalAlpha = 1;
+  },
 };
