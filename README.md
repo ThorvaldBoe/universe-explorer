@@ -2,7 +2,7 @@
 
 A browser-based journey from Earth to the observable universe. See [initial-spec.md](initial-spec.md) for product and scientific goals, and [Visual journey and imagery principles](docs/visual-journey-and-imagery.md) for production lessons from the Earth-to-Moon pilot.
 
-The Solar System and next Stars chapter plans are documented in [Solar System storyboard](docs/solar-system-storyboard.md) and [Stellar neighborhood storyboard](docs/stellar-neighborhood-storyboard.md).
+The Solar System, Stars, and planned Milky Way chapter storyboards are documented in [Solar System storyboard](docs/solar-system-storyboard.md), [Stellar neighborhood storyboard](docs/stellar-neighborhood-storyboard.md), and [Milky Way storyboard](docs/milky-way-storyboard.md).
 
 ## Live preview
 
