@@ -144,7 +144,8 @@ function cosmicStructureStop(frameIndex: number): Stop {
     GALACTIC_CENTER_POSITION_KM[2] + focusLy[2] * LIGHT_YEAR_KM,
   ];
   const frameWidthMeters = COSMIC_STRUCTURE_VIEW_WIDTH_METERS[frameIndex];
-  const cameraFrameWidthMeters = (frame.cameraFrameWidthLy ?? frame.widthLy) * LIGHT_YEAR_METERS;
+  const cameraFrameWidthLy = 'cameraFrameWidthLy' in frame ? frame.cameraFrameWidthLy ?? frame.widthLy : frame.widthLy;
+  const cameraFrameWidthMeters = cameraFrameWidthLy * LIGHT_YEAR_METERS;
   return {
     id: frame.id,
     chapter: frameIndex >= 3 ? '08 · Observable Universe' : '07 · Cosmic Structures',
