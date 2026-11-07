@@ -9,7 +9,7 @@ const stops = [
   'On the street', 'Above the avenue', 'The city below', 'Above the atmosphere',
   'A continental view', 'Earth from orbit', 'A world of its own', 'Earth and Moon',
   'The inner Solar System', 'The planetary Solar System', 'Beyond Neptune', 'The Oort Cloud',
-  'The nearest stars', 'The stellar neighborhood', 'The local galactic region', 'The Milky Way',
+  'The nearest stars', 'The stellar neighborhood', 'The local galactic region', 'The Milky Way', 'The Local Group',
 ];
 const browserErrors = [];
 await mkdir(artifactDir, { recursive: true });

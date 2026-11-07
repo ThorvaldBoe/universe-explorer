@@ -1,5 +1,5 @@
 export type Provenance = 'observed' | 'reconstructed' | 'illustrative' | 'speculative';
-export type RendererKind = 'city' | 'planetary' | 'solar-system' | 'stellar' | 'lunar' | 'galactic' | 'cosmological';
+export type RendererKind = 'city' | 'planetary' | 'solar-system' | 'stellar' | 'lunar' | 'galactic' | 'local-group' | 'cosmological';
 
 export type Vector3Tuple = [number, number, number];
 

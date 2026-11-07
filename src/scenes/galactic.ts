@@ -169,14 +169,16 @@ export const galacticRenderer: SceneRenderer = {
     if (!context) return;
     const transitioningIn = context.transitionFromRenderer === 'stellar' && context.transitionToRenderer === 'galactic';
     const transitioningOut = context.transitionFromRenderer === 'galactic' && context.transitionToRenderer === 'stellar';
+    const enteringFromLocalGroup = context.transitionFromRenderer === 'local-group' && context.transitionToRenderer === 'galactic';
     const leavingGalaxy = context.transitionFromRenderer === 'galactic' && context.transitionToRenderer !== 'galactic';
-    const inTransition = transitioningIn || leavingGalaxy;
+    const inTransition = transitioningIn || enteringFromLocalGroup || leavingGalaxy;
     const progress = context.transitionProgress ?? 1;
     const widthLy = (context.visibleWidthKm ?? LIGHT_YEAR_KM * 150_000) / LIGHT_YEAR_KM;
     const active = context.activeRenderer === 'galactic';
     group.visible = active || inTransition;
     const transitionOpacity = transitioningIn
       ? THREE.MathUtils.smoothstep(progress, .15, .8)
+      : enteringFromLocalGroup ? THREE.MathUtils.smoothstep(progress, .12, .72)
       : transitioningOut ? 1 - THREE.MathUtils.smoothstep(progress, .2, .72)
         : leavingGalaxy ? 1 - THREE.MathUtils.smoothstep(progress, .35, .68) : active ? 1 : 0;
     const labelTransitionOpacity = transitioningIn

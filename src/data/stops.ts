@@ -2,8 +2,9 @@ import type { Stop } from '../types';
 import {
   ASTRONOMICAL_UNIT_KM, EARTH_MOON_DISTANCE_KM, EARTH_RADIUS_KM, MOON_RADIUS_KM,
 } from './solar-system';
-import { LIGHT_YEAR_METERS, SUN_ANCHOR_KM } from './stellar-neighborhood';
+import { LIGHT_YEAR_KM, LIGHT_YEAR_METERS, SUN_ANCHOR_KM } from './stellar-neighborhood';
 import { GALACTIC_CENTER_POSITION_KM, MILKY_WAY_VIEW_WIDTH_METERS } from './milky-way';
+import { LOCAL_GROUP_FRAME_CENTER_LY, LOCAL_GROUP_VIEW_WIDTH_METERS } from './local-group';
 
 const EARTH_LATITUDE = Math.PI / 4;
 const MOON_SITE_LATITUDE = Math.PI / 4;
@@ -103,6 +104,30 @@ function galacticStop(): Stop {
   };
 }
 
+function localGroupStop(): Stop {
+  const centerPositionKm: [number, number, number] = [
+    GALACTIC_CENTER_POSITION_KM[0] + LOCAL_GROUP_FRAME_CENTER_LY[0] * LIGHT_YEAR_KM,
+    GALACTIC_CENTER_POSITION_KM[1] + LOCAL_GROUP_FRAME_CENTER_LY[1] * LIGHT_YEAR_KM,
+    GALACTIC_CENTER_POSITION_KM[2] + LOCAL_GROUP_FRAME_CENTER_LY[2] * LIGHT_YEAR_KM,
+  ];
+  return {
+    id: 'local-group',
+    chapter: '06 · Galaxy',
+    title: 'The Local Group',
+    introduction: 'The Milky Way is one of dozens of galaxies in our local neighborhood. Andromeda lies about 2.5 million light-years away, with Triangulum and many smaller galaxies sharing this gravitational group.',
+    visibleWidthMeters: LOCAL_GROUP_VIEW_WIDTH_METERS,
+    cameraFrameWidthMeters: LOCAL_GROUP_VIEW_WIDTH_METERS,
+    scaleLabel: 'View width · 10 million light-years',
+    renderer: 'local-group',
+    provenance: 'reconstructed',
+    cameraPositionKm: [centerPositionKm[0], centerPositionKm[1], centerPositionKm[2] + 1],
+    focusPositionKm: [...centerPositionKm],
+    lookAtPositionKm: [...centerPositionKm],
+    cameraUp: [0, 1, 0],
+    cameraFovDegrees: 45,
+  };
+}
+
 function earthStop(
   id: string, chapter: string, title: string, introduction: string,
   altitudeKm: number, visibleWidthMeters: number, scaleLabel: string,
@@ -193,4 +218,5 @@ export const stops: Stop[] = [
     10_000, '10,000 light-years', 'reconstructed',
   ),
   galacticStop(),
+  localGroupStop(),
 ];
