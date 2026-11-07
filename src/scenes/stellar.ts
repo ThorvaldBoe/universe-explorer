@@ -108,6 +108,7 @@ export const stellarRenderer: SceneRenderer = {
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     const markers = new THREE.Points(geometry, new THREE.PointsMaterial({ size: 5.2, sizeAttenuation: false, vertexColors: true, transparent: true, opacity: .96, depthWrite: false }));
+    markers.name = 'nearby-star-markers';
     markers.frustumCulled = false; scaledScene.add(markers);
 
     addLocalRegion(scaledScene, random);
@@ -123,6 +124,7 @@ export const stellarRenderer: SceneRenderer = {
     group.position.set(...SUN_ANCHOR_KM);
     group.userData.worldPosition = group.position.clone();
     group.userData.labels = labels;
+    group.userData.markers = markers;
     group.userData.scaledScene = scaledScene;
     group.userData.localLabels = [localLabel];
     group.userData.labelLayer = labelLayer;
@@ -134,12 +136,24 @@ export const stellarRenderer: SceneRenderer = {
     const labels = group.userData.labels as StarLabel[];
     const localRegion = widthLy >= 500;
     const localOpacity = THREE.MathUtils.smoothstep(widthLy, 500, 2_000);
-    group.visible = context.activeRenderer === 'stellar';
+    const transitioningToGalaxy = context.transitionFromRenderer === 'stellar' && context.transitionToRenderer === 'galactic';
+    const transitioningFromGalaxy = context.transitionFromRenderer === 'galactic' && context.transitionToRenderer === 'stellar';
+    const inGalaxyTransition = transitioningToGalaxy || transitioningFromGalaxy;
+    const progress = context.transitionProgress ?? 1;
+    const rendererOpacity = transitioningToGalaxy
+      ? 1 - THREE.MathUtils.smoothstep(progress, .05, .55)
+      : transitioningFromGalaxy ? THREE.MathUtils.smoothstep(progress, .45, 1) : 1;
+    const labelOpacity = transitioningToGalaxy
+      ? 1 - THREE.MathUtils.smoothstep(progress, 0, .4)
+      : transitioningFromGalaxy ? THREE.MathUtils.smoothstep(progress, .48, .78) : 1;
+    group.visible = context.activeRenderer === 'stellar' || inGalaxyTransition;
+    (group.userData.labelLayer as HTMLDivElement).hidden = !group.visible;
     const scaledScene = group.userData.scaledScene as THREE.Group;
     const localField = scaledScene.userData.localField as THREE.Points;
     const localClouds = scaledScene.userData.localClouds as THREE.Group;
     localField.visible = localRegion;
-    (localField.material as THREE.PointsMaterial).opacity = .78 * localOpacity;
+    ((group.userData.markers as THREE.Points).material as THREE.PointsMaterial).opacity = .96 * rendererOpacity;
+    (localField.material as THREE.PointsMaterial).opacity = .78 * localOpacity * rendererOpacity;
     localClouds.visible = localRegion;
     const camera = context.camera;
     const width = context.viewportWidth ?? 1280;
@@ -181,9 +195,9 @@ export const stellarRenderer: SceneRenderer = {
     };
     const localElement = (group.userData.localLabels as HTMLSpanElement[])[0];
     placeLabel(localElement, new THREE.Vector3(2050, 1150, 0), [0, -36], localRegion);
-    localElement.style.opacity = String(localOpacity);
+    localElement.style.opacity = String(localOpacity * labelOpacity);
     localClouds.children.forEach((cloud) => {
-      ((cloud as THREE.Sprite).material as THREE.SpriteMaterial).opacity = .6 * localOpacity;
+      ((cloud as THREE.Sprite).material as THREE.SpriteMaterial).opacity = .6 * localOpacity * rendererOpacity;
     });
     const labelOffsets: Record<string, [number, number]> = {
       'proxima-centauri': [-58, 16], 'alpha-centauri': [45, -17],
@@ -199,6 +213,7 @@ export const stellarRenderer: SceneRenderer = {
       const offset = label.id === 'sun' ? [0, -36] as [number, number] : labelOffsets[label.id] ?? [0, 20] as [number, number];
       offset[0] *= offsetScale; offset[1] *= offsetScale;
       placeLabel(label.element, label.position, offset, isVisible);
+      label.element.style.opacity = String(labelOpacity);
     }
   },
 };

@@ -3,6 +3,7 @@ import {
   ASTRONOMICAL_UNIT_KM, EARTH_MOON_DISTANCE_KM, EARTH_RADIUS_KM, MOON_RADIUS_KM,
 } from './solar-system';
 import { LIGHT_YEAR_METERS, SUN_ANCHOR_KM } from './stellar-neighborhood';
+import { GALACTIC_CENTER_POSITION_KM, MILKY_WAY_VIEW_WIDTH_METERS } from './milky-way';
 
 const EARTH_LATITUDE = Math.PI / 4;
 const MOON_SITE_LATITUDE = Math.PI / 4;
@@ -80,6 +81,25 @@ function stellarStop(
     focusPositionKm: [...SUN_ANCHOR_KM],
     lookAtPositionKm: [...SUN_ANCHOR_KM],
     cameraUp: [0, 1, 0], cameraFovDegrees: 45,
+  };
+}
+
+function galacticStop(): Stop {
+  return {
+    id: 'milky-way',
+    chapter: '06 · Galaxy',
+    title: 'The Milky Way',
+    introduction: 'From the Orion Spur, our whole galaxy comes into view. The Sun lies about 26,000 light-years from the center of this reconstructed barred spiral.',
+    visibleWidthMeters: MILKY_WAY_VIEW_WIDTH_METERS,
+    cameraFrameWidthMeters: MILKY_WAY_VIEW_WIDTH_METERS,
+    scaleLabel: 'View width · 150,000 light-years',
+    renderer: 'galactic',
+    provenance: 'reconstructed',
+    cameraPositionKm: [GALACTIC_CENTER_POSITION_KM[0], GALACTIC_CENTER_POSITION_KM[1], GALACTIC_CENTER_POSITION_KM[2] + 1],
+    focusPositionKm: [...GALACTIC_CENTER_POSITION_KM],
+    lookAtPositionKm: [...GALACTIC_CENTER_POSITION_KM],
+    cameraUp: [0, 1, 0],
+    cameraFovDegrees: 45,
   };
 }
 
@@ -172,4 +192,5 @@ export const stops: Stop[] = [
     'The Sun lies within the Orion Spur of the Milky Way. This reconstructed regional view suggests the scale of stellar density and interstellar clouds; it is not a measured star-by-star map.',
     10_000, '10,000 light-years', 'reconstructed',
   ),
+  galacticStop(),
 ];

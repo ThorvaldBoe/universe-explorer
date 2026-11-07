@@ -3,6 +3,7 @@ import { stops } from './data/stops';
 import { sceneRenderers } from './scenes/registry';
 import { DeepZoomArtwork, earthZoomArtIndexByStop, earthZoomFrames } from './scenes/deep-zoom-artwork';
 import type { RendererKind, Stop } from './types';
+import type { SceneUpdateContext } from './scenes/types';
 import './style.css';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#universe')!;
@@ -136,8 +137,9 @@ function updateInterface(index: number) {
 }
 
 function updateProvenance(stop: Stop) {
-  provenance.hidden = stop.renderer !== 'solar-system' && stop.renderer !== 'stellar';
+  provenance.hidden = stop.renderer !== 'solar-system' && stop.renderer !== 'stellar' && stop.renderer !== 'galactic';
   if (stop.provenance === 'speculative') provenance.textContent = 'Speculative · not directly observed';
+  else if (stop.renderer === 'galactic') provenance.textContent = 'Reconstructed Milky Way model · illustrative density';
   else if (stop.provenance === 'reconstructed') provenance.textContent = 'Reconstructed stellar field · illustrative density';
   else if (stop.renderer === 'stellar') provenance.textContent = 'Catalogued positions · star markers enhanced';
   else provenance.textContent = 'Illustrative scene · geometry anchored to measured values';
@@ -248,6 +250,7 @@ function updateJourney(now: number) {
   const raw = Math.min(1, (now - journey.start) / journey.duration);
   const eased = journey.earthArc ? raw ** 2.4 : raw * raw * (3 - 2 * raw);
   const lunarToEarthMoon = stops[journey.from].id === 'moon' && stops[journey.to].id === 'earth-moon';
+  const galacticReturnToEarth = stops[journey.from].renderer === 'galactic' && earthZoomArtIndexByStop[journey.to] !== undefined;
   if (stops[journey.to].id === 'moon') {
     artwork.showLunarArrival(journey.fromArtIndex, eased);
     if (eased >= .56) updateJourneyCopy(journey.to);
@@ -259,6 +262,21 @@ function updateJourney(now: number) {
     if (eased >= .44) updateJourneyCopy(journey.to);
   } else if (journey.earthArc) {
     artwork.showEarthTransition(journey.fromArtIndex, journey.toArtIndex, eased);
+  } else if (galacticReturnToEarth) {
+    const sourceWidth = stops[journey.from].visibleWidthMeters;
+    const targetWidth = stops[journey.to].visibleWidthMeters;
+    const highestImageWidth = earthZoomFrames.at(-1)!.widthMeters;
+    const imageStart = THREE.MathUtils.clamp(
+      Math.log(sourceWidth / highestImageWidth) / Math.log(sourceWidth / targetWidth), 0, 1,
+    );
+    if (raw < imageStart) {
+      artwork.showSceneOnly();
+      artwork.setOpacity(0);
+    } else {
+      const imageProgress = (raw - imageStart) / (1 - imageStart);
+      artwork.showEarthTransition(journey.fromArtIndex, journey.toArtIndex, imageProgress);
+      artwork.setOpacity(THREE.MathUtils.smoothstep(raw, imageStart, Math.min(1, imageStart + .07)));
+    }
   }
   if (lunarToEarthMoon) {
     // Rise away from the near-side surface. The vertical retreat makes both bodies recede;
@@ -295,6 +313,7 @@ function updateJourney(now: number) {
     const lookTarget = journey.fromLookAt.clone().lerp(journey.toLookAt, eased);
     camera.lookAt(lookTarget.clone().sub(cameraWorldPosition));
   }
+  if (stops[journey.to].renderer === 'galactic' && raw >= .56) updateJourneyCopy(journey.to);
 
   const fromFov = stops[journey.from].cameraFovDegrees ?? 48;
   const toFov = stops[journey.to].cameraFovDegrees ?? 48;
@@ -304,7 +323,7 @@ function updateJourney(now: number) {
     scale.textContent = eased < .5
       ? formatDistance(cameraWorldPosition.length(), 'Earth center')
       : formatDistance(cameraWorldPosition.distanceTo(journey.toTarget), 'Moon center');
-  } else if (lunarToEarthMoon || ['solar-system', 'stellar'].includes(stops[journey.from].renderer) || ['solar-system', 'stellar'].includes(stops[journey.to].renderer)) {
+  } else if (lunarToEarthMoon || ['solar-system', 'stellar', 'galactic'].includes(stops[journey.from].renderer) || ['solar-system', 'stellar', 'galactic'].includes(stops[journey.to].renderer)) {
     const fromWidth = stops[journey.from].visibleWidthMeters / 1000;
     const toWidth = stops[journey.to].visibleWidthMeters / 1000;
     const width = Math.exp(Math.log(fromWidth) + (Math.log(toWidth) - Math.log(fromWidth)) * eased);
@@ -376,9 +395,18 @@ function render() {
   const visibleWidthKm = journey
     ? Math.exp(Math.log(stops[journey.from].visibleWidthMeters / 1000) + (Math.log(stops[journey.to].visibleWidthMeters / 1000) - Math.log(stops[journey.from].visibleWidthMeters / 1000)) * Math.min(1, (performance.now() - journey.start) / journey.duration))
     : stops[active].visibleWidthMeters / 1000;
-  const context = { cameraWorldPosition, visibleWidthKm, viewportWidth: canvas.clientWidth, activeRenderer: journey ? stops[journey.to].renderer : stops[active].renderer };
+  const context: SceneUpdateContext = {
+    cameraWorldPosition,
+    visibleWidthKm,
+    viewportWidth: canvas.clientWidth,
+    activeRenderer: journey ? stops[journey.to].renderer : stops[active].renderer,
+    transitionFromRenderer: journey ? stops[journey.from].renderer : undefined,
+    transitionToRenderer: journey ? stops[journey.to].renderer : undefined,
+    transitionProgress: journey ? Math.min(1, (performance.now() - journey.start) / journey.duration) : undefined,
+  };
   camera.updateMatrixWorld(true);
-  Object.assign(context, { camera, viewportHeight: canvas.clientHeight });
+  context.camera = camera;
+  context.viewportHeight = canvas.clientHeight;
   const updatedGroups = new Set<THREE.Group>();
   for (const [index, group] of sceneGroups) {
     if (updatedGroups.has(group)) continue;
