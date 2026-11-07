@@ -137,10 +137,11 @@ function updateInterface(index: number) {
 }
 
 function updateProvenance(stop: Stop) {
-  provenance.hidden = stop.renderer !== 'solar-system' && stop.renderer !== 'stellar' && stop.renderer !== 'galactic' && stop.renderer !== 'local-group';
+  provenance.hidden = stop.renderer !== 'solar-system' && stop.renderer !== 'stellar' && stop.renderer !== 'galactic' && stop.renderer !== 'local-group' && stop.renderer !== 'cosmological';
   if (stop.provenance === 'speculative') provenance.textContent = 'Speculative · not directly observed';
   else if (stop.renderer === 'galactic') provenance.textContent = 'Reconstructed Milky Way model · illustrative density';
   else if (stop.renderer === 'local-group') provenance.textContent = 'Observed galaxy anchors · reconstructed group view';
+  else if (stop.renderer === 'cosmological') provenance.textContent = 'Observed cluster anchors · schematic cosmic-structure reconstruction';
   else if (stop.provenance === 'reconstructed') provenance.textContent = 'Reconstructed stellar field · illustrative density';
   else if (stop.renderer === 'stellar') provenance.textContent = 'Catalogued positions · star markers enhanced';
   else provenance.textContent = 'Illustrative scene · geometry anchored to measured values';
@@ -170,6 +171,10 @@ function ensureScene(index: number) {
   if (stop.renderer === 'stellar') {
     const sharedStellar = [...sceneGroups.entries()].find(([existingIndex]) => stops[existingIndex].renderer === 'stellar')?.[1];
     if (sharedStellar) { sceneGroups.set(index, sharedStellar); return; }
+  }
+  if (stop.renderer === 'cosmological') {
+    const sharedCosmic = [...sceneGroups.entries()].find(([existingIndex]) => stops[existingIndex].renderer === 'cosmological')?.[1];
+    if (sharedCosmic) { sceneGroups.set(index, sharedCosmic); return; }
   }
   const group = sceneRenderer.create(stop);
   group.userData.worldPosition ??= group.position.clone();
@@ -320,7 +325,7 @@ function updateJourney(now: number) {
     const lookTarget = journey.fromLookAt.clone().lerp(journey.toLookAt, lookProgress);
     camera.lookAt(lookTarget.clone().sub(cameraWorldPosition));
   }
-  if (['galactic', 'local-group'].includes(stops[journey.to].renderer) && raw >= .56) updateJourneyCopy(journey.to);
+  if (['galactic', 'local-group', 'cosmological'].includes(stops[journey.to].renderer) && raw >= .56) updateJourneyCopy(journey.to);
 
   const fromFov = stops[journey.from].cameraFovDegrees ?? 48;
   const toFov = stops[journey.to].cameraFovDegrees ?? 48;
@@ -330,7 +335,7 @@ function updateJourney(now: number) {
     scale.textContent = eased < .5
       ? formatDistance(cameraWorldPosition.length(), 'Earth center')
       : formatDistance(cameraWorldPosition.distanceTo(journey.toTarget), 'Moon center');
-  } else if (lunarToEarthMoon || ['solar-system', 'stellar', 'galactic', 'local-group'].includes(stops[journey.from].renderer) || ['solar-system', 'stellar', 'galactic', 'local-group'].includes(stops[journey.to].renderer)) {
+  } else if (lunarToEarthMoon || ['solar-system', 'stellar', 'galactic', 'local-group', 'cosmological'].includes(stops[journey.from].renderer) || ['solar-system', 'stellar', 'galactic', 'local-group', 'cosmological'].includes(stops[journey.to].renderer)) {
     const fromWidth = stops[journey.from].visibleWidthMeters / 1000;
     const toWidth = stops[journey.to].visibleWidthMeters / 1000;
     const width = Math.exp(Math.log(fromWidth) + (Math.log(toWidth) - Math.log(fromWidth)) * eased);
