@@ -169,7 +169,7 @@ export const localGroupRenderer: SceneRenderer = {
       },
       {
         element: makeLabel('TRIANGULUM · M33', 'triangulum', 'stellar-label-region'),
-        positionLy: new THREE.Vector3(...LOCAL_GROUP_GALAXIES[2].positionLy), offset: [70, 50], phoneOffset: [15, 55],
+        positionLy: new THREE.Vector3(...LOCAL_GROUP_GALAXIES[2].positionLy), offset: [70, 50], phoneOffset: [50, 55],
       },
     ];
     labels.forEach(({ element }) => labelLayer.append(element));
