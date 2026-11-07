@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { SceneRenderer } from './types';
+import { setOpacity, type SceneRenderer, type SceneUpdateContext } from './types';
 
 const MOON_RADIUS_KM = 1737.4;
 
@@ -183,5 +183,20 @@ export const lunarRenderer: SceneRenderer = {
     group.add(new THREE.AmbientLight(0x606879, .45));
     group.userData.sharedTextures = [map, detailMap];
     return group;
+  },
+  update(group, _elapsed, context?: SceneUpdateContext) {
+    if (!context) return;
+    const entering = context.transitionToRenderer === 'lunar' && context.transitionFromRenderer !== 'lunar';
+    const leaving = context.transitionFromRenderer === 'lunar' && context.transitionToRenderer !== 'lunar';
+    const active = context.activeRenderer === 'lunar';
+    const progress = context.transitionProgress ?? 1;
+    group.visible = entering || leaving || active;
+
+    // Blend the 3D terrain with the lunar artwork during both handoffs. Hiding the
+    // group after the Moon stop prevents its horizon from lingering as a thin line.
+    const opacity = entering
+      ? THREE.MathUtils.smoothstep(progress, .72, .96)
+      : leaving ? 1 - THREE.MathUtils.smoothstep(progress, .25, .58) : active ? 1 : 0;
+    setOpacity(group, opacity);
   },
 };
