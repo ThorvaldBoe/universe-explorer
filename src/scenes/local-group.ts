@@ -161,7 +161,7 @@ export const localGroupRenderer: SceneRenderer = {
     const labels: GalaxyLabel[] = [
       {
         element: makeLabel('MILKY WAY · HOME', 'milky-way', 'stellar-label-region'),
-        positionLy: new THREE.Vector3(...LOCAL_GROUP_GALAXIES[0].positionLy), offset: [-46, -24], phoneOffset: [-80, 35],
+        positionLy: new THREE.Vector3(...LOCAL_GROUP_GALAXIES[0].positionLy), offset: [-46, -24], phoneOffset: [-15, 105],
       },
       {
         element: makeLabel('ANDROMEDA · M31', 'andromeda', ''),
@@ -169,7 +169,7 @@ export const localGroupRenderer: SceneRenderer = {
       },
       {
         element: makeLabel('TRIANGULUM · M33', 'triangulum', 'stellar-label-region'),
-        positionLy: new THREE.Vector3(...LOCAL_GROUP_GALAXIES[2].positionLy), offset: [70, 50], phoneOffset: [85, 80],
+        positionLy: new THREE.Vector3(...LOCAL_GROUP_GALAXIES[2].positionLy), offset: [70, 50], phoneOffset: [15, 55],
       },
     ];
     labels.forEach(({ element }) => labelLayer.append(element));
