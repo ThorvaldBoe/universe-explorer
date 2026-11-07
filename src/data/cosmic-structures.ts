@@ -22,6 +22,23 @@ export const COSMIC_STRUCTURE_FRAMES = [
     widthLy: 2_000_000_000,
     viewLabel: 'View width · 2 billion light-years',
   },
+  {
+    id: 'large-scale-universe',
+    title: 'Large-scale Universe',
+    introduction: 'Across a ten-billion-light-year view, the local cosmic web sits within an immense, increasingly smooth distribution. This wide field is a scale-aware reconstruction, not a complete galaxy survey.',
+    widthLy: 10_000_000_000,
+    focusLy: [0, 0, 0] as [number, number, number],
+    viewLabel: 'View width · 10 billion light-years',
+  },
+  {
+    id: 'observable-universe',
+    title: 'The Observable Universe',
+    introduction: 'The observable universe spans about 93 billion light-years across today, although the universe is about 13.8 billion years old. The horizon marks the limit of what we can observe, not a physical wall; space may continue beyond it.',
+    widthLy: 93_000_000_000,
+    cameraFrameWidthLy: 120_000_000_000,
+    focusLy: [0, 0, 0] as [number, number, number],
+    viewLabel: 'Present-day diameter · about 93 billion light-years',
+  },
 ] as const;
 
 export const COSMIC_STRUCTURE_VIEW_WIDTH_METERS = COSMIC_STRUCTURE_FRAMES.map((frame) => frame.widthLy * LIGHT_YEAR_METERS);
@@ -58,4 +75,7 @@ export const COSMIC_STRUCTURE_SOURCES = [
   { name: 'Tully et al. 2014: The Laniakea supercluster of galaxies', url: 'https://doi.org/10.1038/nature13674' },
   { name: 'NASA Science: Large-scale structures', url: 'https://science.nasa.gov/universe/galaxies/large-scale-structures/' },
   { name: 'SDSS filament catalogue paper', url: 'https://doi.org/10.1093/mnras/stt2454' },
+  { name: 'NASA: How Big Is Space? (observable universe about 92 billion light-years across)', url: 'https://www.nasa.gov/science-research/astrophysics/how-big-is-space-we-asked-a-nasa-expert-episode-61/' },
+  { name: 'NASA Webb: Observable universe and early light', url: 'https://science.nasa.gov/mission/webb/big-bang-q-and-a/' },
+  { name: 'NASA: Age and expansion of the universe', url: 'https://science.nasa.gov/exoplanets/what-is-the-universe/' },
 ] as const;
