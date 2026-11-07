@@ -6,7 +6,12 @@ import { GALACTIC_CENTER_POSITION_KM } from '../data/milky-way';
 import { LIGHT_YEAR_KM } from '../data/stellar-neighborhood';
 import type { SceneRenderer, SceneUpdateContext } from './types';
 
-type GalaxyLabel = { element: HTMLSpanElement; positionLy: THREE.Vector3; offset: [number, number] };
+type GalaxyLabel = {
+  element: HTMLSpanElement;
+  positionLy: THREE.Vector3;
+  offset: [number, number];
+  phoneOffset: [number, number];
+};
 
 function seeded(seed: number) {
   let state = seed >>> 0;
@@ -154,9 +159,18 @@ export const localGroupRenderer: SceneRenderer = {
     labelLayer.className = 'stellar-label-layer';
     labelLayer.setAttribute('aria-hidden', 'true');
     const labels: GalaxyLabel[] = [
-      { element: makeLabel('MILKY WAY · HOME', 'milky-way', 'stellar-label-region'), positionLy: new THREE.Vector3(...LOCAL_GROUP_GALAXIES[0].positionLy), offset: [-46, -24] },
-      { element: makeLabel('ANDROMEDA · M31', 'andromeda', ''), positionLy: new THREE.Vector3(...LOCAL_GROUP_GALAXIES[1].positionLy), offset: [-76, -38] },
-      { element: makeLabel('TRIANGULUM · M33', 'triangulum', 'stellar-label-region'), positionLy: new THREE.Vector3(...LOCAL_GROUP_GALAXIES[2].positionLy), offset: [70, 50] },
+      {
+        element: makeLabel('MILKY WAY · HOME', 'milky-way', 'stellar-label-region'),
+        positionLy: new THREE.Vector3(...LOCAL_GROUP_GALAXIES[0].positionLy), offset: [-46, -24], phoneOffset: [-80, 35],
+      },
+      {
+        element: makeLabel('ANDROMEDA · M31', 'andromeda', ''),
+        positionLy: new THREE.Vector3(...LOCAL_GROUP_GALAXIES[1].positionLy), offset: [-76, -38], phoneOffset: [-20, -85],
+      },
+      {
+        element: makeLabel('TRIANGULUM · M33', 'triangulum', 'stellar-label-region'),
+        positionLy: new THREE.Vector3(...LOCAL_GROUP_GALAXIES[2].positionLy), offset: [70, 50], phoneOffset: [85, 80],
+      },
     ];
     labels.forEach(({ element }) => labelLayer.append(element));
     document.querySelector('.scene-wrap')?.append(labelLayer);
@@ -207,8 +221,9 @@ export const localGroupRenderer: SceneRenderer = {
         return;
       }
       const point = item.positionLy.clone().multiplyScalar(LIGHT_YEAR_KM).add(group.position).project(camera);
-      const x = (point.x * .5 + .5) * width + item.offset[0] * Math.min(1, width / 700);
-      const y = (-point.y * .5 + .5) * height + item.offset[1] * Math.min(1, width / 700);
+      const offset = width < 500 ? item.phoneOffset : item.offset.map((value) => value * Math.min(1, width / 700));
+      const x = (point.x * .5 + .5) * width + offset[0];
+      const y = (-point.y * .5 + .5) * height + offset[1];
       const inFrame = point.z >= -1 && point.z <= 1 && x > 4 && x < width - 4 && y > 65 && y < height - 4;
       item.element.hidden = !inFrame;
       if (!inFrame) return;
