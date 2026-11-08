@@ -58,6 +58,10 @@ try {
       await delay(350);
       await page.screenshot({ path: `${artifactDir}/${viewport.name}-${String(i + 1).padStart(2, '0')}-${scenesForViewport[i].toLowerCase().replaceAll(' ', '-')}.png`, fullPage: true, timeout: 90000 });
     }
+    await page.getByRole('button', { name: 'Go to On the street' }).click();
+    await page.getByRole('heading', { name: 'On the street' }).waitFor({ timeout: 30000 });
+    const returnedScale = await page.locator('#scale-readout').textContent();
+    if (!returnedScale?.includes('1 m')) throw new Error(`Direct progress navigation did not restore the street artwork scale: ${returnedScale}`);
     const webgl = await page.locator('#fallback').isHidden();
     await writeFile(`${artifactDir}/${viewport.name}-report.json`, JSON.stringify({
       viewport, webglAvailable: webgl, sceneTitles: scenesForViewport,
@@ -68,8 +72,8 @@ try {
   }
 
   const videoContext = await browser.newContext({
-    viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1,
-    recordVideo: { dir: artifactDir, size: { width: 1440, height: 1000 } },
+    viewport: { width: 1024, height: 768 }, deviceScaleFactor: 1,
+    recordVideo: { dir: artifactDir, size: { width: 1024, height: 768 } },
   });
   const videoPage = await videoContext.newPage();
   videoPage.on('pageerror', (error) => browserErrors.push({ viewport: 'transition-video', type: 'pageerror', message: error.message }));
@@ -89,8 +93,10 @@ try {
   }
   await videoPage.getByRole('heading', { name: stops[stops.length - 1] }).waitFor({ timeout: 20000 });
   await delay(800);
-  await videoPage.getByRole('button', { name: /Return to Earth/ }).click();
-  await videoPage.getByRole('heading', { name: stops[0] }).waitFor({ timeout: 20000 });
+  for (let i = stops.length - 2; i >= 0; i--) {
+    await videoPage.getByRole('button', { name: /Previous/ }).click();
+    await videoPage.getByRole('heading', { name: stops[i] }).waitFor({ timeout: 20000 });
+  }
   await delay(500);
   const video = videoPage.video();
   await videoPage.close();

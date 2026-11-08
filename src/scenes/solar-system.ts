@@ -3,7 +3,7 @@ import {
   ASTRONOMICAL_UNIT_KM, EARTH_MOON_DISTANCE_KM, EARTH_RADIUS_KM,
   MOON_RADIUS_KM, PLANETS, PLUTO, SUN_RADIUS_KM,
 } from '../data/solar-system';
-import type { SceneRenderer, SceneUpdateContext } from './types';
+import { applyRendererTransitionOpacity, rendererTransitionOpacity, type SceneRenderer, type SceneUpdateContext } from './types';
 
 const SUN_POSITION = new THREE.Vector3(-ASTRONOMICAL_UNIT_KM, 0, 0);
 type PlanetSpec = typeof PLANETS[number];
@@ -226,7 +226,8 @@ export const solarSystemRenderer: SceneRenderer = {
   },
   update(group, _elapsed, context?: SceneUpdateContext) {
     if (!context) return;
-    group.visible = context.activeRenderer === 'solar-system';
+    const transitionOpacity = rendererTransitionOpacity('solar-system', context);
+    group.visible = transitionOpacity > .001;
     const widthKm = context.visibleWidthKm ?? 1_000_000;
     const worldPerPixel = widthKm / Math.max(1, context.viewportWidth ?? 1280);
     const labelWidth = 110 * worldPerPixel;
@@ -260,5 +261,6 @@ export const solarSystemRenderer: SceneRenderer = {
       entry.sprite.position.copy(entry.position).add(new THREE.Vector3(offsetX, offsetY, 0));
     }
     for (const orbit of orbitPaths) orbit.path.visible = orbit.radiusKm <= widthKm * .5;
+    applyRendererTransitionOpacity(group, transitionOpacity);
   },
 };

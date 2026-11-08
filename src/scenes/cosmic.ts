@@ -70,7 +70,32 @@ export const cosmicRenderer: SceneRenderer = {
       const start = nodes[from]; const end = nodes[to];
       const midpoint = start.clone().lerp(end, .5).add(new THREE.Vector3(...bend).multiplyScalar(1_000_000));
       const curve = new THREE.QuadraticBezierCurve3(start, midpoint, end);
-      webPaths.push({ points: curve.getPoints(18), color: index % 5 === 0 ? '#a28cef' : '#5f91ca', alpha: .22 });
+      webPaths.push({ points: curve.getPoints(28), color: index % 5 === 0 ? '#b3a4ff' : '#76a9e8', alpha: .34 });
+
+      // Fainter tributaries give each main filament depth and branching detail while
+      // leaving broad, readable voids between the large structures.
+      const tangent = end.clone().sub(start).normalize();
+      const filamentLength = end.distanceTo(start);
+      for (let branch = 0; branch < 2; branch++) {
+        const along = .22 + random() * .56;
+        const branchStart = start.clone().lerp(end, along);
+        const randomDirection = new THREE.Vector3(random() - .5, random() - .5, random() - .5);
+        let side = tangent.clone().cross(randomDirection).normalize();
+        if (side.lengthSq() < .01) side = new THREE.Vector3(-tangent.y, tangent.x, 0).normalize();
+        if (branch === 1) side.negate();
+        const reach = filamentLength * (.12 + random() * .16);
+        const branchEnd = branchStart.clone().addScaledVector(side, reach)
+          .addScaledVector(tangent, filamentLength * (random() - .5) * .18);
+        const control = branchStart.clone().lerp(branchEnd, .48)
+          .addScaledVector(side, reach * .34)
+          .addScaledVector(tangent, reach * (random() - .5) * .3);
+        const tributary = new THREE.QuadraticBezierCurve3(branchStart, control, branchEnd);
+        webPaths.push({
+          points: tributary.getPoints(16),
+          color: branch % 2 === 0 ? '#7b9fe0' : '#9a83d5',
+          alpha: .13 + random() * .09,
+        });
+      }
     });
 
     const wideWebPaths: WebPath[] = webPaths.map((path) => ({
@@ -203,10 +228,25 @@ export const cosmicRenderer: SceneRenderer = {
           else drawing.lineTo(screen.x, screen.y);
         }
         drawing.strokeStyle = path.color;
-        drawing.lineWidth = 1;
+        drawing.lineWidth = 3.2;
+        drawing.shadowColor = path.color;
+        drawing.shadowBlur = 8;
+        drawing.stroke();
+        drawing.shadowBlur = 0;
+        drawing.lineWidth = 1.15;
         drawing.stroke();
       }
-      drawing.globalAlpha = webOpacity * .8;
+      drawing.globalAlpha = webOpacity * .36;
+      for (const point of group.userData.webNodes as THREE.Vector3[] | undefined ?? []) {
+        const screen = project(point);
+        if (!screen || screen.x < 0 || screen.x > width || screen.y < 0 || screen.y > height) continue;
+        const glow = drawing.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, 9);
+        glow.addColorStop(0, 'rgba(185, 213, 255, .8)');
+        glow.addColorStop(1, 'rgba(119, 160, 224, 0)');
+        drawing.fillStyle = glow;
+        drawing.beginPath(); drawing.arc(screen.x, screen.y, 9, 0, Math.PI * 2); drawing.fill();
+      }
+      drawing.globalAlpha = webOpacity * .92;
       drawing.fillStyle = '#d4e3ff';
       for (const point of group.userData.webNodes as THREE.Vector3[] | undefined ?? []) {
         const screen = project(point);
@@ -226,10 +266,25 @@ export const cosmicRenderer: SceneRenderer = {
           else drawing.lineTo(screen.x, screen.y);
         }
         drawing.strokeStyle = path.color;
-        drawing.lineWidth = 1;
+        drawing.lineWidth = 3.5;
+        drawing.shadowColor = path.color;
+        drawing.shadowBlur = 9;
+        drawing.stroke();
+        drawing.shadowBlur = 0;
+        drawing.lineWidth = 1.2;
         drawing.stroke();
       }
-      drawing.globalAlpha = wideWebOpacity * .75;
+      drawing.globalAlpha = wideWebOpacity * .38;
+      for (const point of group.userData.wideWebNodes as THREE.Vector3[]) {
+        const screen = project(point);
+        if (!screen || screen.x < 0 || screen.x > width || screen.y < 0 || screen.y > height) continue;
+        const glow = drawing.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, 10);
+        glow.addColorStop(0, 'rgba(190, 218, 255, .82)');
+        glow.addColorStop(1, 'rgba(119, 160, 224, 0)');
+        drawing.fillStyle = glow;
+        drawing.beginPath(); drawing.arc(screen.x, screen.y, 10, 0, Math.PI * 2); drawing.fill();
+      }
+      drawing.globalAlpha = wideWebOpacity * .92;
       drawing.fillStyle = '#c8dcff';
       for (const point of group.userData.wideWebNodes as THREE.Vector3[]) {
         const screen = project(point);
@@ -268,8 +323,16 @@ export const cosmicRenderer: SceneRenderer = {
         drawing.restore();
         drawing.textAlign = 'center';
         drawing.font = '600 10px Inter, ui-sans-serif, system-ui, sans-serif';
-        drawing.fillStyle = 'rgba(204, 224, 255, .92)';
-        drawing.fillText('OBSERVABLE HORIZON · ~46.5 BILLION LIGHT-YEARS RADIUS', observer.x, observer.y - apparentRadius + 20);
+        const horizonLabel = 'OBSERVABLE HORIZON · ~46.5 BILLION LIGHT-YEARS RADIUS';
+        const labelWidth = drawing.measureText(horizonLabel).width;
+        const labelX = Math.max(labelWidth / 2 + 8, Math.min(width - labelWidth / 2 - 8, observer.x));
+        const labelY = Math.min(height - 12, observer.y + apparentRadius - 18);
+        drawing.fillStyle = 'rgba(4, 10, 20, .82)';
+        drawing.beginPath();
+        drawing.roundRect(labelX - labelWidth / 2 - 8, labelY - 12, labelWidth + 16, 22, 7);
+        drawing.fill();
+        drawing.fillStyle = 'rgba(204, 224, 255, .96)';
+        drawing.fillText(horizonLabel, labelX, labelY + 3);
       }
     }
 
