@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { LIGHT_YEAR_KM, NEARBY_STARS, SUN_ANCHOR_KM } from '../data/stellar-neighborhood';
 import type { NearbyStar } from '../data/stellar-neighborhood';
-import type { SceneRenderer, SceneUpdateContext } from './types';
+import { rendererTransitionOpacity, type SceneRenderer, type SceneUpdateContext } from './types';
 
 type StarLabel = { element: HTMLSpanElement; position: THREE.Vector3; id: string; name: string; labelIn: string };
 
@@ -136,17 +136,9 @@ export const stellarRenderer: SceneRenderer = {
     const labels = group.userData.labels as StarLabel[];
     const localRegion = widthLy >= 500;
     const localOpacity = THREE.MathUtils.smoothstep(widthLy, 500, 2_000);
-    const transitioningToGalaxy = context.transitionFromRenderer === 'stellar' && context.transitionToRenderer === 'galactic';
-    const transitioningFromGalaxy = context.transitionFromRenderer === 'galactic' && context.transitionToRenderer === 'stellar';
-    const inGalaxyTransition = transitioningToGalaxy || transitioningFromGalaxy;
-    const progress = context.transitionProgress ?? 1;
-    const rendererOpacity = transitioningToGalaxy
-      ? 1 - THREE.MathUtils.smoothstep(progress, .05, .55)
-      : transitioningFromGalaxy ? THREE.MathUtils.smoothstep(progress, .45, 1) : 1;
-    const labelOpacity = transitioningToGalaxy
-      ? 1 - THREE.MathUtils.smoothstep(progress, 0, .4)
-      : transitioningFromGalaxy ? THREE.MathUtils.smoothstep(progress, .48, .78) : 1;
-    group.visible = context.activeRenderer === 'stellar' || inGalaxyTransition;
+    const rendererOpacity = rendererTransitionOpacity('stellar', context);
+    const labelOpacity = rendererOpacity;
+    group.visible = rendererOpacity > .001;
     (group.userData.labelLayer as HTMLDivElement).hidden = !group.visible;
     const scaledScene = group.userData.scaledScene as THREE.Group;
     const localField = scaledScene.userData.localField as THREE.Points;

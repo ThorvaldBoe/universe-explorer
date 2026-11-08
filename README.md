@@ -31,7 +31,7 @@ The Solar System, Stars, Milky Way, Local Group, and Cosmic Structures storyboar
 
 ### Pre-merge visual review
 
-Every pull request runs the production build and a headless Chromium review of every journey stop at desktop, iPad portrait, and phone sizes. The workflow attaches screenshots, WebGL availability reports, browser errors, and a forward-and-return journey recording as a downloadable artifact. Inspect these artifacts and resolve visual issues before merging; this review does not replace checking on physical devices.
+Every pull request runs the production build and a headless Chromium review of every journey stop at desktop, iPad portrait, and phone sizes. The workflow attaches screenshots, WebGL availability reports, browser errors, and a full forward-and-reverse journey recording as a downloadable artifact. Inspect these artifacts and resolve visual issues before merging; this review does not replace checking on physical devices.
 
 ## Scientific and visual standards
 
@@ -58,7 +58,7 @@ Every pull request runs the production build and a headless Chromium review of e
 
 - Keep the app deployable as a static site on GitHub Pages, without a required backend or paid runtime service.
 - Use TypeScript, Vite, and Three.js for the app foundation; keep interface controls in semantic HTML and CSS.
-- Make transitions deterministic, skippable, and reversible through journey navigation. Interpolate logarithmic scale and blend scene levels of detail instead of linearly scaling raw astronomical distances.
+- Make transitions deterministic and reversible through journey navigation. Progress-dot jumps travel through intervening stops so artwork, scale, and renderer handoffs stay in sequence. Interpolate logarithmic scale and blend scene levels of detail instead of linearly scaling raw astronomical distances.
 - Support desktop and mobile layouts, keyboard and touch controls, readable focus states, and `prefers-reduced-motion`.
 - Show explanatory scene text by default; keep a touch-friendly, futuristic toggle available to hide or restore it, and remember the visitor’s preference.
 - Provide useful loading and WebGL failure states and a readable text fallback. Never leave the visitor with a blank canvas and no explanation.

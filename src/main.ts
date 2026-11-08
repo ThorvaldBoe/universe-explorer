@@ -47,6 +47,7 @@ const cameraWorldPosition = new THREE.Vector3();
 let frame = 0;
 let active = 0;
 let preparingJourney = false;
+let routeDestination: number | undefined;
 let journey: {
   from: number;
   to: number;
@@ -131,10 +132,13 @@ function updateInterface(index: number) {
     button.type = 'button'; button.title = item.title; button.disabled = Boolean(journey) || preparingJourney;
     button.setAttribute('aria-label', 'Go to ' + item.title);
     button.setAttribute('aria-current', position === index ? 'step' : 'false');
-    button.addEventListener('click', () => navigate(position));
+    button.addEventListener('click', () => navigate(position, true));
     return button;
   }));
   progress.setAttribute('aria-label', 'Stop ' + (index + 1) + ' of ' + stops.length);
+  if (window.matchMedia('(max-width: 900px)').matches) {
+    progress.querySelector<HTMLButtonElement>('.dot.current')?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }
 }
 
 function updateProvenance(stop: Stop) {
@@ -183,10 +187,21 @@ function ensureScene(index: number) {
   sceneGroups.set(index, group);
 }
 
-async function navigate(requestedIndex: number) {
+async function navigate(requestedIndex: number, visitInterveningStops = false) {
   if (journey || preparingJourney) return;
-  const index = (requestedIndex + stops.length) % stops.length;
-  if (index === active) return;
+  const destination = (requestedIndex + stops.length) % stops.length;
+  if (destination === active) return;
+  if (visitInterveningStops && Math.abs(destination - active) > 1) {
+    routeDestination = destination;
+    await beginJourney(active + Math.sign(destination - active), 1250);
+    return;
+  }
+  routeDestination = undefined;
+  await beginJourney(destination);
+}
+
+async function beginJourney(index: number, routeDuration?: number) {
+  if (journey || preparingJourney) return;
   ensureScene(index);
 
   const from = active;
@@ -208,7 +223,11 @@ async function navigate(requestedIndex: number) {
   const fromUp = camera.up.clone();
   const toUp = upFor(stops[index]);
   const earthToEarth = from < stops.findIndex((stop) => stop.id === 'moon') && index < stops.findIndex((stop) => stop.id === 'moon');
-  const duration = reducedMotion ? .01 : earthToEarth ? 7.5 + Math.min(index, 4) * .35 : 9.5;
+  // This 1,400× view-width jump benefits from an extra beat in either direction.
+  const oortCloudExpansion = (stops[from].id === 'beyond-neptune' && stops[index].id === 'oort-cloud')
+    || (stops[from].id === 'oort-cloud' && stops[index].id === 'beyond-neptune');
+  const duration = reducedMotion ? .01 : routeDuration ? routeDuration / 1000
+    : earthToEarth ? 7.5 + Math.min(index, 4) * .35 : oortCloudExpansion ? 13.5 : 9.5;
 
   journey = {
     from, to: index, start: performance.now(), duration: duration * 1000,
@@ -250,6 +269,12 @@ function finishJourney() {
   camera.updateProjectionMatrix();
   journey = undefined;
   updateInterface(active);
+  if (routeDestination !== undefined && routeDestination !== active) {
+    const nextStop = active + Math.sign(routeDestination - active);
+    void beginJourney(nextStop, 1250);
+  } else {
+    routeDestination = undefined;
+  }
 }
 
 function updateJourney(now: number) {
