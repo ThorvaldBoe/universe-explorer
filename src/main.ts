@@ -4,6 +4,7 @@ import { sceneRenderers } from './scenes/registry';
 import { DeepZoomArtwork, earthZoomArtIndexByStop, earthZoomFrames } from './scenes/deep-zoom-artwork';
 import type { RendererKind, Stop } from './types';
 import type { SceneUpdateContext } from './scenes/types';
+import { initializePageCounter } from './visit-counter';
 import './style.css';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#universe')!;
@@ -459,4 +460,5 @@ window.addEventListener('pagehide', () => {
 });
 
 updateInterface(0);
+void initializePageCounter(document.querySelector<HTMLElement>('#visit-count'));
 init();
