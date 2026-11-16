@@ -24,6 +24,12 @@ Panel order is 27 m (upper left), 81 m (upper right), 243 m (lower left), and 72
 
 This wider view suggests a more varied urban core with parks, transit, older street patterns, larger commercial footprints, and uneven density. Its apparent road marking is exaggerated by the sketch and must not be copied as scale-accurate detail.
 
+## First photoreal city study
+
+![Photoreal straight-down city study at a 243 m view width, with a centered avenue, varied blocks, trees, parking, and construction.](images/v3-city-243m-photoreal-study.png)
+
+This first image study adds variation in block size, roof shapes, street angles, tree cover, and building height around the central road. It is a 1,254 × 1,254 px single image, not a 3×3 high-resolution master. Its road location is a compositional reference only; it is not pixel-registered to the 81 m frame and is not approved for the live journey or DZI pyramid.
+
 ## Scale references
 
 Keep the physical road marking fixed at approximately 0.18 m wide. Its fraction of the view width falls by three at every step:
