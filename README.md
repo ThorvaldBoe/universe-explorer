@@ -6,6 +6,8 @@ The Solar System, Stars, Milky Way, Local Group, and Cosmic Structures storyboar
 
 The preserved application builds and versioning policy are documented in [App versions](docs/app-versions.md). V1 and V2 remain available from the experience selector; V3 is the maintained build.
 
+The V3 city redesign begins with [the city ascent storyboard](docs/v3-city-storyboard.md), which records the planned irregular urban composition and scale constraints before final image production.
+
 ## Live preview
 
 [Open Universe Explorer](https://thorvaldboe.github.io/universe-explorer/)
