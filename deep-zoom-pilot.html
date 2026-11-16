@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#050914">
+    <meta name="description" content="A tiled deep zoom pilot, from a one-meter road view to a seamless three-meter composite.">
+    <title>Deep Zoom Pilot · Universe Explorer</title>
+  </head>
+  <body class="pilot-page">
+    <main class="pilot-shell">
+      <header class="topbar">
+        <a class="wordmark" href="./" aria-label="Universe Explorer home"><span class="mark">✳</span> UNIVERSE EXPLORER</a>
+        <div class="topbar-actions">
+          <a class="pilot-back" href="./">FULL JOURNEY <span aria-hidden="true">↗</span></a>
+        </div>
+      </header>
+      <section class="pilot-layout" aria-labelledby="pilot-title">
+        <div class="pilot-copy">
+          <span class="eyebrow">V3 · IMAGE PYRAMID TEST</span>
+          <h1 id="pilot-title">One continuous image.</h1>
+          <p>A 1 m view at the road center pulls back into one harmonized 3 m master. Deep Zoom streams the right resolution tiles as the view changes.</p>
+          <div class="pilot-scale"><span class="pulse"></span><span id="pilot-scale-label" aria-live="polite">VIEW WIDTH · 1 M</span></div>
+          <button id="zoom-out" class="pilot-button" type="button">Pull back to 3 m <span aria-hidden="true">↓</span></button>
+          <button id="reset-view" class="pilot-reset" type="button">Reset view</button>
+          <p class="pilot-note">Pilot master: 1,254 × 1,254 px. This validates tile delivery and continuous motion; larger, reviewed source imagery is needed for production.</p>
+        </div>
+        <div id="deep-zoom-viewer" class="pilot-viewer" role="img" aria-label="Tiled image zoom from a one-meter road view to the full three-meter composite">
+          <div class="pilot-viewer-status" id="viewer-status">Loading image tiles…</div>
+        </div>
+      </section>
+    </main>
+    <script src="/universe-explorer/version-selector.js" defer></script>
+    <script type="module" src="/src/deep-zoom-pilot.ts"></script>
+  </body>
+</html>

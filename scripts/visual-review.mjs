@@ -31,6 +31,45 @@ try {
 
   browser = await chromium.launch({ headless: true, args: ['--enable-webgl', '--ignore-gpu-blocklist', '--use-gl=angle', '--use-angle=swiftshader'] });
 
+  const versionsPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  versionsPage.on('pageerror', (error) => browserErrors.push({ viewport: 'version-selector', type: 'pageerror', message: error.message }));
+  const assertNoVersionOverflow = async (version) => {
+    const dimensions = await versionsPage.evaluate(() => ({ width: window.innerWidth, scrollWidth: document.documentElement.scrollWidth }));
+    if (dimensions.scrollWidth > dimensions.width) throw new Error(`${version} overflows at phone width: ${JSON.stringify(dimensions)}`);
+  };
+  await versionsPage.goto(baseUrl, { waitUntil: 'networkidle' });
+  await assertNoVersionOverflow('V3');
+  const versionPicker = versionsPage.getByRole('combobox', { name: 'Select experience version' });
+  if (await versionPicker.inputValue() !== 'v3') throw new Error('The root journey should be selected as V3.');
+  await versionPicker.selectOption('v1');
+  await versionsPage.getByRole('heading', { name: 'Home' }).waitFor();
+  if (!versionsPage.url().includes('/versions/v1/')) throw new Error('V1 did not open at its preserved route.');
+  await assertNoVersionOverflow('V1');
+  await versionsPage.getByRole('combobox', { name: 'Select experience version' }).selectOption('v2');
+  await versionsPage.getByRole('heading', { name: 'On the street' }).waitFor();
+  if (!versionsPage.url().includes('/versions/v2/')) throw new Error('V2 did not open at its preserved route.');
+  await assertNoVersionOverflow('V2');
+  await versionsPage.getByRole('combobox', { name: 'Select experience version' }).selectOption('v3');
+  await versionsPage.getByRole('heading', { name: 'On the street' }).waitFor();
+  await versionsPage.close();
+
+  const pilotPage = await browser.newPage({ viewport: { width: 1200, height: 900 } });
+  pilotPage.on('pageerror', (error) => browserErrors.push({ viewport: 'deep-zoom-pilot', type: 'pageerror', message: error.message }));
+  pilotPage.on('console', (message) => {
+    if (message.type() === 'error') browserErrors.push({ viewport: 'deep-zoom-pilot', type: 'console', message: message.text() });
+  });
+  await pilotPage.goto(`${baseUrl}deep-zoom-pilot.html`, { waitUntil: 'networkidle' });
+  await pilotPage.locator('#viewer-status').waitFor({ state: 'hidden' });
+  await pilotPage.getByRole('button', { name: /Pull back to 3 m/ }).click();
+  await pilotPage.getByText('VIEW WIDTH · 3 M').waitFor();
+  await pilotPage.screenshot({ path: `${artifactDir}/deep-zoom-pilot-3m.png`, fullPage: true });
+  await pilotPage.getByRole('button', { name: 'Reset view' }).click();
+  await pilotPage.getByText('VIEW WIDTH · 1 M').waitFor();
+  await pilotPage.screenshot({ path: `${artifactDir}/deep-zoom-pilot-1m.png`, fullPage: true });
+  await pilotPage.getByRole('combobox', { name: 'Select experience version' }).selectOption('v2');
+  await pilotPage.getByRole('heading', { name: 'On the street' }).waitFor();
+  await pilotPage.close();
+
   for (const viewport of [
     { name: 'desktop', width: 1440, height: 1000 },
     { name: 'ipad-portrait', width: 820, height: 1180 },
