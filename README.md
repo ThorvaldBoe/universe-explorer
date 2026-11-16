@@ -4,6 +4,8 @@ A browser-based journey from Earth to the observable universe. See [initial-spec
 
 The Solar System, Stars, Milky Way, Local Group, and Cosmic Structures storyboards are documented in [Solar System storyboard](docs/solar-system-storyboard.md), [Stellar neighborhood storyboard](docs/stellar-neighborhood-storyboard.md), [Milky Way storyboard](docs/milky-way-storyboard.md), [Local Group storyboard](docs/local-group-storyboard.md), and [Cosmic Structures storyboard](docs/cosmic-structures-storyboard.md).
 
+The preserved application builds and versioning policy are documented in [App versions](docs/app-versions.md). V1 and V2 remain available from the experience selector; V3 is the maintained build.
+
 ## Live preview
 
 [Open Universe Explorer](https://thorvaldboe.github.io/universe-explorer/)
