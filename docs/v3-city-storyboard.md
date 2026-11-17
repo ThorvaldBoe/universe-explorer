@@ -44,7 +44,15 @@ The second candidate came from a rough nine-region expansion followed by a singl
 
 ![Photoreal 243 m city expansion preview with a centered avenue and irregular surrounding neighborhood.](images/v3-city-243m-harmonized-candidate.png)
 
-This 1,254 × 1,254 px image expands the 81 m composition by three in both dimensions. Its middle third follows the 81 m candidate's avenue, rooftops, and block composition closely enough to continue the visual spine, while adding parks, a rail corridor, angled streets, parking, and more varied city blocks. Like the 81 m image, it is an AI-generated preview rather than a registered high-resolution master. The next review should compare both center crops during an actual 3× zoom, then revise the artwork where the road, building edges, or scale cues visibly jump.
+This 1,254 × 1,254 px image expands the earlier 81 m composition by three in both dimensions. It remains a preview and must be regenerated against the selected 81 m master before use.
+
+## 27 m → 81 m handoff pilot
+
+![Photoreal straight-down 81 m city composition for the 27 m handoff pilot.](../public/assets/v3-city-pilot/81m-city-candidate.png)
+
+This updated 1,254 × 1,254 px image was generated with the 27 m view as its center-composition reference. Its middle third carries the same road spine, sidewalk layout, roof edges, and tree placement more closely than the earlier 81 m candidate. The Deep Zoom handoff pilot is available at [`v3-city-pilot.html`](../v3-city-pilot.html): it overlays the original 27 m image in the center third, zooms between 27 m and 81 m, and includes a scrubber for inspecting intermediate frames.
+
+This is an artwork and motion pilot, not a production-resolution master. The generated 81 m source remains 1,254 × 1,254 px. A direct pixel paste into the 81 m frame created doubled roof and sidewalk edges. The pilot therefore keeps the 81 m image as one continuous field and introduces the detailed 27 m layer only in the final close-up frame. Local browser review shows a remaining detail pop: the 81 m center crop differs in road width and object placement from the original 27 m image. The pilot exposes that mismatch and should remain separate from the live journey until the center composition is corrected at adequate resolution.
 
 ## Scale references
 
@@ -66,6 +74,6 @@ At city scale the marking will become subpixel in the displayed view and should 
 2. Define each city frame's footprint, composition, and center crop from the fixed threefold scale rule.
 3. Create a full-resolution larger master around that registered center. Use the storyboard for irregular city structure, not as image tiles to stitch directly.
 4. Harmonize the complete master. A generated harmonization pass may remove obvious panel boundaries, but exact-pixel center insertion can reintroduce a rectangular join. Repair internal joins in the artwork before generating its DZI pyramid; tile overlap can prevent rendering gaps but cannot repair visual seams.
-5. Review the final master at native resolution and through the actual zoom, in both directions, before creating the next scale.
+5. Review the final master at native resolution and through the actual zoom, in both directions, before creating the next scale. The current 81 m pilot is the composition and motion check; it does not yet pass the native-resolution art requirement.
 
 The first implementation milestone should be one reviewed city-scale handoff, not replacing every city image at once.

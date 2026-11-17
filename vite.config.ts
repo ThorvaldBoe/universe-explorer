@@ -11,6 +11,7 @@ export default defineConfig({
       input: {
         main: resolve(projectRoot, 'index.html'),
         deepZoomPilot: resolve(projectRoot, 'deep-zoom-pilot.html'),
+        v3CityPilot: resolve(projectRoot, 'v3-city-pilot.html'),
       },
     },
   },

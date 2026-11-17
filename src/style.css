@@ -132,3 +132,21 @@ h1 { margin: 1rem 0 .7rem; font-size: clamp(2.3rem, 3.4vw, 3rem); line-height: .
 
 .stellar-label-sun { color: #ffe5ae; border-color: rgba(255, 215, 138, .6); }
 .stellar-label-region { color: #c6d7ff; }
+
+.city-zoom-scrubber {
+  display: grid;
+  grid-template-columns: auto minmax(70px, 1fr) auto;
+  align-items: center;
+  gap: .65rem;
+  margin: .75rem 0 .2rem;
+  color: #8291ac;
+  font-size: .65rem;
+  font-variant-numeric: tabular-nums;
+}
+.city-zoom-scrubber input { width: 100%; accent-color: #73dfff; cursor: ew-resize; }
+.city-zoom-scrubber input:disabled { cursor: wait; opacity: .5; }
+.city-handoff-page .pilot-copy > p { max-width: 34rem; }
+@media(max-width:900px) {
+  .city-zoom-scrubber { width: min(100%, 320px); margin-top: .25rem; }
+  .city-handoff-page .pilot-note { display: none; }
+}
