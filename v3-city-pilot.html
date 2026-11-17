@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#050914">
+    <meta name="description" content="Review the 27 m to 81 m V3 city zoom handoff.">
+    <title>V3 City Handoff Pilot · Universe Explorer</title>
+  </head>
+  <body class="pilot-page city-handoff-page">
+    <main class="pilot-shell">
+      <header class="topbar">
+        <a class="wordmark" href="./" aria-label="Universe Explorer home"><span class="mark">✳</span> UNIVERSE EXPLORER</a>
+        <div class="topbar-actions">
+          <a class="pilot-back" href="./deep-zoom-pilot.html">DEEP ZOOM LAB <span aria-hidden="true">↗</span></a>
+        </div>
+      </header>
+      <section class="pilot-layout" aria-labelledby="city-pilot-title">
+        <div class="pilot-copy">
+          <span class="eyebrow">V3 · CITY HANDOFF TEST</span>
+          <h1 id="city-pilot-title">27 m to 81 m.</h1>
+          <p>Pull back from the same straight-down street view into its wider city context. Scrub the zoom to inspect where the image handoff feels discontinuous.</p>
+          <div class="pilot-scale"><span class="pulse"></span><span id="city-scale-label" aria-live="polite">VIEW WIDTH · 27 M</span></div>
+          <button id="city-zoom-toggle" class="pilot-button" type="button" disabled>Loading city imagery…</button>
+          <label class="city-zoom-scrubber" for="city-zoom-range">
+            <span>27 m</span>
+            <input id="city-zoom-range" type="range" min="0" max="1000" value="1000" aria-label="Scrub between the 27 meter and 81 meter views" disabled>
+            <span>81 m</span>
+          </label>
+          <button id="city-reset" class="pilot-reset" type="button" disabled>Reset to 27 m</button>
+          <p class="pilot-note">The generated 81 m study is 1,254 × 1,254 px. The original 27 m image is registered over its center for the final close-up. This pilot checks scale and motion; it does not add invented high-resolution detail.</p>
+        </div>
+        <div id="city-zoom-viewer" class="pilot-viewer" role="img" aria-label="Top-down city image that zooms from a 27 meter street view to an 81 meter neighborhood view">
+          <div class="pilot-viewer-status" id="city-viewer-status">Loading image tiles…</div>
+        </div>
+      </section>
+    </main>
+    <script src="/universe-explorer/version-selector.js" defer></script>
+    <script type="module" src="/src/v3-city-pilot.ts"></script>
+  </body>
+</html>

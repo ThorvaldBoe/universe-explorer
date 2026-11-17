@@ -53,6 +53,30 @@ try {
   await versionsPage.getByRole('heading', { name: 'On the street' }).waitFor();
   await versionsPage.close();
 
+  const cityPage = await browser.newPage({ viewport: { width: 1200, height: 900 } });
+  cityPage.on('pageerror', (error) => browserErrors.push({ viewport: 'v3-city-pilot', type: 'pageerror', message: error.message }));
+  cityPage.on('console', (message) => {
+    if (message.type() === 'error') browserErrors.push({ viewport: 'v3-city-pilot', type: 'console', message: message.text() });
+  });
+  await cityPage.goto(`${baseUrl}v3-city-pilot.html`, { waitUntil: 'networkidle' });
+  await cityPage.locator('#city-viewer-status').waitFor({ state: 'hidden' });
+  await cityPage.getByText('VIEW WIDTH · 27 M').waitFor();
+  await cityPage.screenshot({ path: `${artifactDir}/v3-city-pilot-27m.png`, fullPage: true });
+  await cityPage.getByRole('button', { name: /Pull back to 81 m/ }).click();
+  await cityPage.getByText('VIEW WIDTH · 81 M').waitFor();
+  await cityPage.screenshot({ path: `${artifactDir}/v3-city-pilot-81m.png`, fullPage: true });
+  await cityPage.locator('#city-zoom-range').fill('500');
+  await cityPage.screenshot({ path: `${artifactDir}/v3-city-pilot-mid-transition.png`, fullPage: true });
+  await cityPage.locator('#city-zoom-range').fill('990');
+  await cityPage.screenshot({ path: `${artifactDir}/v3-city-pilot-close-handoff.png`, fullPage: true });
+  await cityPage.locator('#city-zoom-range').fill('999');
+  await cityPage.screenshot({ path: `${artifactDir}/v3-city-pilot-detail-handoff.png`, fullPage: true });
+  await cityPage.getByRole('button', { name: 'Reset to 27 m' }).click();
+  await cityPage.getByText('VIEW WIDTH · 27 M').waitFor();
+  const cityDimensions = await cityPage.evaluate(() => ({ width: window.innerWidth, scrollWidth: document.documentElement.scrollWidth }));
+  if (cityDimensions.scrollWidth > cityDimensions.width) throw new Error(`V3 city pilot overflows at desktop width: ${JSON.stringify(cityDimensions)}`);
+  await cityPage.close();
+
   const pilotPage = await browser.newPage({ viewport: { width: 1200, height: 900 } });
   pilotPage.on('pageerror', (error) => browserErrors.push({ viewport: 'deep-zoom-pilot', type: 'pageerror', message: error.message }));
   pilotPage.on('console', (message) => {
