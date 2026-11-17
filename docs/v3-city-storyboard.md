@@ -30,6 +30,12 @@ This wider view suggests a more varied urban core with parks, transit, older str
 
 This first image study adds variation in block size, roof shapes, street angles, tree cover, and building height around the central road. It is a 1,254 × 1,254 px single image, not a 3×3 high-resolution master. Its road location is a compositional reference only; it is not pixel-registered to the 81 m frame and is not approved for the live journey or DZI pyramid.
 
+## 81 m anchor candidate
+
+![Photoreal straight-down 81 m city view with the same central road, offset side streets, varied roofs, and small courtyards.](images/v3-city-81m-anchor-candidate.png)
+
+This is the first candidate for the city-scale center image. It keeps the road centered while introducing asymmetry in the cross streets, building footprints, courtyards, and tree placement. It was generated at 1,254 × 1,254 px and is not yet the production-resolution anchor. Before using it inside a 243 m master, choose the final tile resolution, produce the anchor at that resolution, and check its road and crop against the preceding 27 m view.
+
 ## Scale references
 
 Keep the physical road marking fixed at approximately 0.18 m wide. Its fraction of the view width falls by three at every step:
