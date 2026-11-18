@@ -8,6 +8,8 @@ The preserved application builds and versioning policy are documented in [App ve
 
 The V3 city redesign begins with [the city ascent storyboard](docs/v3-city-storyboard.md), which records the planned irregular urban composition and scale constraints before final image production.
 
+The separate [V3 CesiumJS city pilot](v3-cesium-pilot.html) compares a real map-based city zoom with the generated-image handoff. It uses public OpenStreetMap raster tiles, starting at Nordmøre stadion in Kristiansund; it is an exploratory alternative, not part of the live journey.
+
 ## Live preview
 
 [Open Universe Explorer](https://thorvaldboe.github.io/universe-explorer/)

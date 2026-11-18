@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#050914">
+    <meta name="description" content="Compare a CesiumJS map-based city scale transition with generated image zooms.">
+    <title>V3 Cesium City Pilot · Universe Explorer</title>
+  </head>
+  <body class="pilot-page city-handoff-page cesium-pilot-page">
+    <main class="pilot-shell">
+      <header class="topbar">
+        <a class="wordmark" href="./" aria-label="Universe Explorer home"><span class="mark">✳</span> UNIVERSE EXPLORER</a>
+        <div class="topbar-actions"><a class="pilot-back" href="./deep-zoom-pilot.html">DEEP ZOOM LAB <span aria-hidden="true">↗</span></a></div>
+      </header>
+      <section class="pilot-layout" aria-labelledby="cesium-title">
+        <div class="pilot-copy">
+          <span class="eyebrow">V3 · CESIUMJS CITY TEST</span>
+          <h1 id="cesium-title">81 m to 27 m.</h1>
+          <p>Pull into a real map view instead of enlarging generated city artwork. This CesiumJS pilot starts above Nordmøre stadion, KBK’s home ground in Kristiansund.</p>
+          <div class="pilot-scale"><span class="pulse"></span><span id="cesium-scale-label" aria-live="polite">VIEW WIDTH · 81 M</span></div>
+          <button id="cesium-zoom-toggle" class="pilot-button" type="button" disabled>Loading map…</button>
+          <label class="city-zoom-scrubber" for="cesium-zoom-range">
+            <span>81 m</span>
+            <input id="cesium-zoom-range" type="range" min="0" max="1000" value="0" aria-label="Scrub between the 81 meter and 27 meter map views" disabled>
+            <span>27 m</span>
+          </label>
+          <button id="cesium-reset" class="pilot-reset" type="button" disabled>Reset to 81 m</button>
+          <p class="pilot-note">Uses public OpenStreetMap raster tiles with attribution. The map provides geographic context, not photorealistic or building-interior detail. 27 m and 81 m are camera view-width targets; terrain and imagery detail vary by location.</p>
+        </div>
+        <div id="cesium-viewer" class="pilot-viewer cesium-viewer" role="region" aria-label="Interactive CesiumJS city map">
+          <div class="pilot-viewer-status" id="cesium-viewer-status">Starting CesiumJS…</div>
+        </div>
+      </section>
+    </main>
+    <script src="/universe-explorer/version-selector.js" defer></script>
+    <script type="module" src="/src/v3-cesium-pilot.ts"></script>
+  </body>
+</html>
