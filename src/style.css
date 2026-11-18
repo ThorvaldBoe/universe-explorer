@@ -132,3 +132,17 @@ h1 { margin: 1rem 0 .7rem; font-size: clamp(2.3rem, 3.4vw, 3rem); line-height: .
 
 .stellar-label-sun { color: #ffe5ae; border-color: rgba(255, 215, 138, .6); }
 .stellar-label-region { color: #c6d7ff; }
+
+.cesium-link { color: #91a8cd; font-size: .56rem; font-weight: 700; letter-spacing: .12em; text-decoration: none; white-space: nowrap; }
+.cesium-link:hover { color: #d6edff; }
+.cesium-viewer { isolation: isolate; }
+.cesium-viewer .cesium-widget,
+.cesium-viewer .cesium-widget canvas { width: 100% !important; height: 100% !important; }
+.cesium-viewer .cesium-widget-credits { color: #111 !important; font-size: 10px !important; }
+.cesium-viewer .cesium-viewer-bottom { left: auto; right: 4px; bottom: 3px; }
+.cesium-viewer .cesium-widget-credits a { color: #111 !important; }
+@media(max-width:500px) {
+  .topbar-actions { gap: .4rem; }
+  .cesium-link { font-size: 0; }
+  .cesium-link::before { content: 'MAP'; font-size: .52rem; }
+}
