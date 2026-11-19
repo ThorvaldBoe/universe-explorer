@@ -138,6 +138,8 @@ h1 { margin: 1rem 0 .7rem; font-size: clamp(2.3rem, 3.4vw, 3rem); line-height: .
 .cesium-city-map .cesium-widget,
 .cesium-city-map .cesium-widget canvas { width:100% !important; height:100% !important; }
 .cesium-city-map .cesium-viewer-bottom { left:auto; right:4px; bottom:3px; }
+.cesium-city-map .cesium-viewer-bottom { z-index:3; }
+.cesium-city-map .cesium-ai-aerial { position:absolute; z-index:2; inset:0; width:100%; height:100%; object-fit:cover; transform-origin:center; pointer-events:none; }
 .cesium-city-map::after { content:'Loading map imagery…'; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); color:#d6e3f4; font-size:.78rem; letter-spacing:.04em; text-shadow:0 1px 5px #000; pointer-events:none; }
 .cesium-city-map[data-map-status='loaded']::after { content:none; }
 .cesium-city-map[data-map-status='error']::after { content:'Map unavailable · showing fallback view'; }

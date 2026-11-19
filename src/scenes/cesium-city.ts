@@ -8,6 +8,9 @@ export class CesiumCityView {
   private destroyed = false;
   private lastWidth = 0;
   private lastOpacity = -1;
+  private enhancedAerial?: HTMLImageElement;
+  private lastEnhancedScale = -1;
+  private lastEnhancedOpacity = -1;
 
   constructor(private readonly host: HTMLElement) {}
 
@@ -63,6 +66,14 @@ export class CesiumCityView {
         maximumLevel: 18,
         credit: 'Source: Esri, Vantor, Earthstar Geographics, and the GIS User Community',
       }));
+      const enhancedAerial = document.createElement('img');
+      enhancedAerial.className = 'cesium-ai-aerial';
+      enhancedAerial.alt = '';
+      enhancedAerial.setAttribute('aria-hidden', 'true');
+      enhancedAerial.draggable = false;
+      enhancedAerial.src = `${import.meta.env.BASE_URL}imagery/ai-enhanced-street.webp`;
+      this.enhancedAerial = enhancedAerial;
+      this.host.append(enhancedAerial);
       viewer.scene.globe.tileLoadProgressEvent.addEventListener((remaining) => {
         if (remaining === 0 && this.host.dataset.mapStatus !== 'error') this.host.dataset.mapStatus = 'loaded';
       });
@@ -111,15 +122,30 @@ export class CesiumCityView {
   }
 
   setWidth(widthMeters: number) {
+    const safeWidth = Math.max(1, widthMeters);
+    const fadeProgress = Math.min(1, Math.max(0, Math.log(safeWidth / 27) / Math.log(3)));
+    const easedFade = fadeProgress * fadeProgress * (3 - 2 * fadeProgress);
+    const enhancedOpacity = 1 - easedFade;
+    const enhancedScale = Math.min(1, 27 / safeWidth);
+    if (this.enhancedAerial) {
+      if (Math.abs(enhancedOpacity - this.lastEnhancedOpacity) > 0.01) {
+        this.enhancedAerial.style.opacity = String(enhancedOpacity);
+        this.lastEnhancedOpacity = enhancedOpacity;
+      }
+      if (Math.abs(enhancedScale - this.lastEnhancedScale) > 0.001) {
+        this.enhancedAerial.style.transform = `scale(${enhancedScale})`;
+        this.lastEnhancedScale = enhancedScale;
+      }
+    }
     const viewer = this.viewer;
-    if (!viewer || (this.lastWidth > 0 && Math.abs(Math.log(Math.max(1, widthMeters) / Math.max(1, this.lastWidth))) < 0.001)) return;
-    this.lastWidth = widthMeters;
+    if (!viewer || (this.lastWidth > 0 && Math.abs(Math.log(safeWidth / Math.max(1, this.lastWidth))) < 0.001)) return;
+    this.lastWidth = safeWidth;
     const Cesium = this.Cesium;
     if (!Cesium) return;
     const fov = viewer.camera.frustum instanceof Cesium.PerspectiveFrustum
       ? viewer.camera.frustum.fovy ?? Cesium.Math.toRadians(60)
       : Cesium.Math.toRadians(60);
-    const height = (widthMeters / 2) / Math.tan(fov / 2);
+    const height = (safeWidth / 2) / Math.tan(fov / 2);
     const destination = Cesium.Cartesian3.fromDegrees(7.7188289, 63.1241405, height);
     const orientation = { heading: 0, pitch: -Cesium.Math.PI_OVER_TWO, roll: 0 };
     viewer.camera.setView({ destination, orientation });

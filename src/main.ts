@@ -152,7 +152,7 @@ function updateInterface(index: number) {
 
 function updateProvenance(stop: Stop) {
   provenance.hidden = stop.renderer !== 'solar-system' && stop.renderer !== 'stellar' && stop.renderer !== 'galactic' && stop.renderer !== 'local-group' && stop.renderer !== 'cosmological';
-  if (stop.renderer === 'city') provenance.textContent = 'Satellite imagery · © Esri, Vantor, Earthstar Geographics, and the GIS User Community';
+  if (stop.renderer === 'city') provenance.textContent = 'AI-enhanced aerial view · illustrative, not surveyed';
   else if (stop.provenance === 'speculative') provenance.textContent = 'Speculative · not directly observed';
   else if (stop.renderer === 'galactic') provenance.textContent = 'Reconstructed Milky Way model · illustrative density';
   else if (stop.renderer === 'local-group') provenance.textContent = 'Observed galaxy anchors · reconstructed group view';
@@ -266,6 +266,7 @@ function formatDistance(distanceKm: number, reference = 'Earth center') {
 }
 
 function formatVisibleWidth(widthKm: number) {
+  if (widthKm < 1) return Math.round(widthKm * 1000).toLocaleString() + ' m';
   if (widthKm < 1_000_000) return Math.round(widthKm).toLocaleString() + ' km';
   if (widthKm < 1_000_000_000) return (widthKm / 1_000_000).toLocaleString(undefined, { maximumSignificantDigits: 3 }) + ' million km';
   if (widthKm < 1_000_000_000_000) return (widthKm / 1_000_000_000).toLocaleString(undefined, { maximumSignificantDigits: 3 }) + ' billion km';
@@ -295,6 +296,7 @@ function updateJourney(now: number) {
   if (!journey) return;
   const raw = Math.min(1, (now - journey.start) / journey.duration);
   const eased = journey.earthArc ? raw ** 2.4 : raw * raw * (3 - 2 * raw);
+  let cesiumWidthMeters: number | undefined;
   if (stopUsesCesium(journey.from) && stopUsesCesium(journey.to)) cesiumOpacity = 1;
   else if (stopUsesCesium(journey.from)) cesiumOpacity = 1 - smoothUnit((raw - .35) / .35);
   else if (stopUsesCesium(journey.to)) cesiumOpacity = smoothUnit(raw / .4);
@@ -302,7 +304,8 @@ function updateJourney(now: number) {
   if (stopUsesCesium(journey.from) && stopUsesCesium(journey.to)) {
     const fromWidth = stops[journey.from].visibleWidthMeters;
     const toWidth = stops[journey.to].visibleWidthMeters;
-    cesiumMap.setWidth(Math.exp(Math.log(fromWidth) + (Math.log(toWidth) - Math.log(fromWidth)) * eased));
+    cesiumWidthMeters = Math.exp(Math.log(fromWidth) + (Math.log(toWidth) - Math.log(fromWidth)) * eased);
+    cesiumMap.setWidth(cesiumWidthMeters);
   }
   const lunarToEarthMoon = stops[journey.from].id === 'moon' && stops[journey.to].id === 'earth-moon';
   const milkyWayToLocalGroup = stops[journey.from].renderer === 'galactic' && stops[journey.to].renderer === 'local-group';
@@ -402,7 +405,9 @@ function updateJourney(now: number) {
   } else if ((stopUsesCesium(journey.from) && stopUsesCesium(journey.to)) || lunarToEarthMoon || ['solar-system', 'stellar', 'galactic', 'local-group', 'cosmological'].includes(stops[journey.from].renderer) || ['solar-system', 'stellar', 'galactic', 'local-group', 'cosmological'].includes(stops[journey.to].renderer)) {
     const fromWidth = stops[journey.from].visibleWidthMeters / 1000;
     const toWidth = stops[journey.to].visibleWidthMeters / 1000;
-    const width = Math.exp(Math.log(fromWidth) + (Math.log(toWidth) - Math.log(fromWidth)) * eased);
+    const width = cesiumWidthMeters !== undefined
+      ? cesiumWidthMeters / 1000
+      : Math.exp(Math.log(fromWidth) + (Math.log(toWidth) - Math.log(fromWidth)) * eased);
     scale.textContent = 'View width · ' + formatVisibleWidth(width);
   } else if (stops[journey.from].id === 'moon') {
     scale.textContent = eased < .5
