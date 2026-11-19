@@ -1,4 +1,5 @@
 type CesiumModule = typeof import('cesium');
+import 'cesium/Build/Cesium/Widgets/widgets.css';
 
 export class CesiumCityView {
   private viewer?: import('cesium').Viewer;
@@ -12,7 +13,10 @@ export class CesiumCityView {
 
   async initialize() {
     try {
-      const Cesium: CesiumModule = await import('cesium');
+      if (import.meta.env.PROD) await this.loadProductionCesium();
+      const Cesium: CesiumModule = import.meta.env.PROD
+        ? (window as unknown as { Cesium: CesiumModule }).Cesium
+        : await import('cesium');
       if (this.destroyed) return;
       this.Cesium = Cesium;
 
@@ -65,6 +69,26 @@ export class CesiumCityView {
       this.host.dataset.mapStatus = 'error';
       console.error('Cesium city map failed to initialize', error);
     }
+  }
+
+  private async loadProductionCesium() {
+    const existing = document.querySelector<HTMLScriptElement>('script[data-cesium-runtime]');
+    if (existing) {
+      if (existing.dataset.loaded === 'true') return;
+      await new Promise<void>((resolve, reject) => {
+        existing.addEventListener('load', () => { existing.dataset.loaded = 'true'; resolve(); }, { once: true });
+        existing.addEventListener('error', () => reject(new Error('Cesium runtime failed to load')), { once: true });
+      });
+      return;
+    }
+    const script = document.createElement('script');
+    script.dataset.cesiumRuntime = 'true';
+    script.src = new URL(`${import.meta.env.BASE_URL}universe-explorer/cesium/Cesium.js`, window.location.origin).href;
+    await new Promise<void>((resolve, reject) => {
+      script.addEventListener('load', () => { script.dataset.loaded = 'true'; resolve(); }, { once: true });
+      script.addEventListener('error', () => reject(new Error('Cesium runtime failed to load')), { once: true });
+      document.head.append(script);
+    });
   }
 
   setVisible(visible: boolean) {

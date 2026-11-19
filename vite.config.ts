@@ -6,7 +6,20 @@ import cesium from 'vite-plugin-cesium';
 const projectRoot = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
-  plugins: [cesium()],
+  plugins: [
+    cesium(),
+    {
+      name: 'skip-eager-cesium-global',
+      transformIndexHtml: {
+        order: 'post',
+        handler(html) {
+          return html
+            .replace(/<script\b[^>]*src="[^"]*\/Cesium\.js"[^>]*><\/script>\s*/g, '')
+            .replace(/<link\b[^>]*href="[^"]*\/Widgets\/widgets\.css"[^>]*>\s*/g, '');
+        },
+      },
+    },
+  ],
   base: '/universe-explorer/',
   build: {
     rollupOptions: {
