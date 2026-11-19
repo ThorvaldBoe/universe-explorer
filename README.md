@@ -8,7 +8,7 @@ The preserved application builds and versioning policy are documented in [App ve
 
 The V3 city ascent uses CesiumJS and real map imagery in place of generated city zoom artwork. The earlier image-production studies remain documented in [the city ascent storyboard](docs/v3-city-storyboard.md).
 
-V3 now starts its Earth ascent with a CesiumJS map centered on a local road in Kristiansund. It replaces the generated city images for the Earth segment, then continues into the existing Earth, Moon, Solar System, and universe journey. OpenStreetMap raster imagery is used for the city view; detail depends on map coverage.
+V3 now starts its Earth ascent with a CesiumJS satellite view centered on a local road in Kristiansund. It replaces the generated city images for the Earth segment, then continues into the existing Earth, Moon, Solar System, and universe journey. Satellite image detail depends on the available imagery coverage.
 
 ## Live preview
 

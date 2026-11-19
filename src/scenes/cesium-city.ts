@@ -55,10 +55,13 @@ export class CesiumCityView {
       viewer.scene.screenSpaceCameraController.enableTranslate = false;
       viewer.scene.screenSpaceCameraController.enableZoom = false;
 
-      viewer.imageryLayers.addImageryProvider(new Cesium.OpenStreetMapImageryProvider({
-        url: 'https://tile.openstreetmap.org/',
-        maximumLevel: 19,
-        credit: '© OpenStreetMap contributors',
+      viewer.imageryLayers.addImageryProvider(new Cesium.UrlTemplateImageryProvider({
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        // This area has aerial coverage through level 18; higher tile levels
+        // return Esri's “Map data not available” placeholder, so Cesium must
+        // upsample the last real image instead of replacing it with a gray tile.
+        maximumLevel: 18,
+        credit: 'Source: Esri, Vantor, Earthstar Geographics, and the GIS User Community',
       }));
       viewer.scene.globe.tileLoadProgressEvent.addEventListener((remaining) => {
         if (remaining === 0 && this.host.dataset.mapStatus !== 'error') this.host.dataset.mapStatus = 'loaded';
@@ -107,7 +110,7 @@ export class CesiumCityView {
     this.setVisible(bounded > 0.01);
   }
 
-  setWidth(widthMeters: number, duration = 0) {
+  setWidth(widthMeters: number) {
     const viewer = this.viewer;
     if (!viewer || (this.lastWidth > 0 && Math.abs(Math.log(Math.max(1, widthMeters) / Math.max(1, this.lastWidth))) < 0.001)) return;
     this.lastWidth = widthMeters;
@@ -119,8 +122,8 @@ export class CesiumCityView {
     const height = (widthMeters / 2) / Math.tan(fov / 2);
     const destination = Cesium.Cartesian3.fromDegrees(7.7188289, 63.1241405, height);
     const orientation = { heading: 0, pitch: -Cesium.Math.PI_OVER_TWO, roll: 0 };
-    if (duration > 0) viewer.camera.flyTo({ destination, orientation, duration });
-    else viewer.camera.setView({ destination, orientation });
+    viewer.camera.setView({ destination, orientation });
+    viewer.scene.requestRender();
   }
 
   destroy() {
