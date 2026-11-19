@@ -68,6 +68,7 @@ let journey: {
   fromUp: THREE.Vector3;
   toUp: THREE.Vector3;
   earthArc: boolean;
+  lunarApproach: boolean;
   fromArtIndex: number;
   toArtIndex: number;
 } | undefined;
@@ -234,6 +235,8 @@ async function beginJourney(index: number, routeDuration?: number) {
   const fromUp = camera.up.clone();
   const toUp = upFor(stops[index]);
   const earthToEarth = from < stops.findIndex((stop) => stop.id === 'moon') && index < stops.findIndex((stop) => stop.id === 'moon');
+  const lunarApproach = (stops[from].id === 'earth' && stops[index].id === 'moon')
+    || (stops[from].id === 'moon' && stops[index].id === 'earth');
   // This 1,400× view-width jump benefits from an extra beat in either direction.
   const oortCloudExpansion = (stops[from].id === 'beyond-neptune' && stops[index].id === 'oort-cloud')
     || (stops[from].id === 'oort-cloud' && stops[index].id === 'beyond-neptune');
@@ -250,6 +253,7 @@ async function beginJourney(index: number, routeDuration?: number) {
     toQuaternion: orientationAt(toPosition, toLookAt, toUp),
     fromTarget, toTarget, fromLookAt, toLookAt, fromUp, toUp,
     earthArc: earthToEarth,
+    lunarApproach,
     fromArtIndex, toArtIndex,
   };
   preparingJourney = false;
@@ -330,7 +334,17 @@ function updateJourney(now: number) {
       artwork.setOpacity(THREE.MathUtils.smoothstep(raw, imageStart, Math.min(1, imageStart + .07)));
     }
   }
-  if (lunarToEarthMoon) {
+  if (journey.lunarApproach) {
+    // Fly along a shallow arc toward the lunar landing pose. The control point
+    // lifts the route above the direct chord, giving the turn a clear forward feel.
+    const start = journey.fromPosition;
+    const end = journey.toPosition;
+    const control = start.clone().lerp(end, .5).add(new THREE.Vector3(0, 0, 18_000));
+    const inverse = 1 - eased;
+    cameraWorldPosition.copy(start).multiplyScalar(inverse * inverse)
+      .addScaledVector(control, 2 * inverse * eased)
+      .addScaledVector(end, eased * eased);
+  } else if (lunarToEarthMoon) {
     // Rise away from the near-side surface. The vertical retreat makes both bodies recede;
     // easing the lateral move to the pair's midpoint preserves their 384,400 km separation.
     const lateral = eased * eased;
@@ -359,10 +373,15 @@ function updateJourney(now: number) {
   if (journey.earthArc) {
     // Keep the original camera quaternion throughout the radial Earth ascent.
     camera.quaternion.copy(journey.fromQuaternion);
-  } else if (stops[journey.from].id === 'earth' && stops[journey.to].id === 'moon') {
-    // Retreat toward the Moon while keeping Earth in view; never pivot to face the lunar surface.
-    const earthFacingBlend = THREE.MathUtils.smoothstep(eased, 0, .18);
-    const lookTarget = journey.fromLookAt.clone().lerp(journey.fromTarget, earthFacingBlend);
+  } else if (journey.lunarApproach) {
+    const start = journey.fromPosition;
+    const end = journey.toPosition;
+    const control = start.clone().lerp(end, .5).add(new THREE.Vector3(0, 0, 18_000));
+    const tangent = control.clone().sub(start).multiplyScalar(2 * (1 - eased))
+      .add(end.clone().sub(control).multiplyScalar(2 * eased)).normalize();
+    const landingTurn = THREE.MathUtils.smoothstep(eased, .68, 1);
+    const forwardTarget = cameraWorldPosition.clone().addScaledVector(tangent, 100_000);
+    const lookTarget = forwardTarget.lerp(journey.toLookAt, landingTurn);
     camera.lookAt(lookTarget.sub(cameraWorldPosition));
   } else {
     const lookProgress = milkyWayToLocalGroup ? eased ** 1.7 : eased;
