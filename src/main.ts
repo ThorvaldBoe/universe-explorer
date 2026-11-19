@@ -152,7 +152,7 @@ function updateInterface(index: number) {
 
 function updateProvenance(stop: Stop) {
   provenance.hidden = stop.renderer !== 'solar-system' && stop.renderer !== 'stellar' && stop.renderer !== 'galactic' && stop.renderer !== 'local-group' && stop.renderer !== 'cosmological';
-  if (stop.renderer === 'city') provenance.textContent = 'Map data · © OpenStreetMap contributors';
+  if (stop.renderer === 'city') provenance.textContent = 'Satellite imagery · © Esri, Vantor, Earthstar Geographics, and the GIS User Community';
   else if (stop.provenance === 'speculative') provenance.textContent = 'Speculative · not directly observed';
   else if (stop.renderer === 'galactic') provenance.textContent = 'Reconstructed Milky Way model · illustrative density';
   else if (stop.renderer === 'local-group') provenance.textContent = 'Observed galaxy anchors · reconstructed group view';
@@ -242,10 +242,6 @@ async function beginJourney(index: number, routeDuration?: number) {
     || (stops[from].id === 'oort-cloud' && stops[index].id === 'beyond-neptune');
   const duration = reducedMotion ? .01 : routeDuration ? routeDuration / 1000
     : earthToEarth ? 7.5 + Math.min(index, 4) * .35 : oortCloudExpansion ? 13.5 : 9.5;
-  if (stopUsesCesium(from) || stopUsesCesium(index)) {
-    cesiumMap.setWidth(stops[index].visibleWidthMeters, reducedMotion ? 0 : Math.min(duration, 3));
-  }
-
   journey = {
     from, to: index, start: performance.now(), duration: duration * 1000,
     fromPosition, toPosition,
@@ -303,6 +299,11 @@ function updateJourney(now: number) {
   else if (stopUsesCesium(journey.from)) cesiumOpacity = 1 - smoothUnit((raw - .35) / .35);
   else if (stopUsesCesium(journey.to)) cesiumOpacity = smoothUnit(raw / .4);
   else cesiumOpacity = 0;
+  if (stopUsesCesium(journey.from) && stopUsesCesium(journey.to)) {
+    const fromWidth = stops[journey.from].visibleWidthMeters;
+    const toWidth = stops[journey.to].visibleWidthMeters;
+    cesiumMap.setWidth(Math.exp(Math.log(fromWidth) + (Math.log(toWidth) - Math.log(fromWidth)) * eased));
+  }
   const lunarToEarthMoon = stops[journey.from].id === 'moon' && stops[journey.to].id === 'earth-moon';
   const milkyWayToLocalGroup = stops[journey.from].renderer === 'galactic' && stops[journey.to].renderer === 'local-group';
   const deepSpaceReturnToEarth = ['galactic', 'local-group', 'cosmological'].includes(stops[journey.from].renderer)
