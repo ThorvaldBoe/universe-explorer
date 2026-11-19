@@ -8,7 +8,7 @@ The preserved application builds and versioning policy are documented in [App ve
 
 The V3 city ascent uses CesiumJS and real map imagery in place of generated city zoom artwork. The earlier image-production studies remain documented in [the city ascent storyboard](docs/v3-city-storyboard.md).
 
-V3 now starts its Earth ascent with a CesiumJS satellite view centered on a local road in Kristiansund. It replaces the generated city images for the Earth segment, then continues into the existing Earth, Moon, Solar System, and universe journey. Satellite image detail depends on the available imagery coverage.
+V3 starts its Earth ascent with an AI-enhanced aerial view centered on a local road in Kristiansund. The illustrative close view blends into satellite imagery as the camera pulls out, then the journey continues through the Earth, Moon, Solar System, and universe.
 
 ## Live preview
 
