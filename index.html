@@ -14,7 +14,6 @@
         <a class="wordmark" href="./" aria-label="Universe Explorer home"><span class="mark">✳</span> UNIVERSE EXPLORER</a>
         <div class="topbar-actions">
           <span class="topbar-note">A journey through space and scale</span>
-          <a class="cesium-link" href="/universe-explorer/v3-cesium-pilot.html">CESIUM CITY <span aria-hidden="true">↗</span></a>
           <a class="deep-zoom-link" href="/universe-explorer/deep-zoom-pilot.html">DEEP ZOOM LAB <span aria-hidden="true">↗</span></a>
           <button id="text-toggle" class="text-toggle" type="button" aria-pressed="true" aria-controls="scene-meta" aria-label="Hide explanatory text">
             <svg class="text-toggle-glyph" viewBox="0 0 28 28" aria-hidden="true">
@@ -31,6 +30,7 @@
       <section class="stage" aria-labelledby="scene-title">
         <div class="scene-wrap">
           <canvas id="universe" aria-label="A city street, Earth, and the Moon along a continuous journey"></canvas>
+          <div id="cesium-city-map" class="cesium-city-map" aria-label="Map view in Kristiansund, Norway"></div>
           <div id="fallback" class="fallback" hidden>3D effects are unavailable in this browser. The scale artwork and scene descriptions are still available.</div>
           <div class="scale-chip"><span class="pulse"></span><span id="scale-readout" aria-live="polite">View width · 1 m</span></div>
         </div>
@@ -53,7 +53,7 @@
         <a class="site-counter-credit" href="https://page-views-api.ratneshc.com/docs/getting-started" target="_blank" rel="noopener noreferrer">PAGE VIEWS API</a>
       </footer>
     </main>
-    <script src="/universe-explorer/version-selector.js" defer></script>
+    <script src="./version-selector.js" defer></script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

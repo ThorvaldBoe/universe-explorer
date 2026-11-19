@@ -8,7 +8,7 @@
 
   const picker = document.createElement('label');
   picker.className = 'experience-version-picker';
-  picker.innerHTML = '<span aria-hidden="true">EXPERIENCE</span><select aria-label="Select experience version"><option value="v1">V1 · Four scenes</option><option value="v2">V2 · Full journey</option><option value="v3">V3 · Deep zoom</option></select>';
+  picker.innerHTML = '<span aria-hidden="true">EXPERIENCE</span><select aria-label="Select experience version"><option value="v1">V1 · Four scenes</option><option value="v2">V2 · Full journey</option><option value="v3">V3 · Cesium city journey</option></select>';
   const select = picker.querySelector('select');
   select.value = currentVersion;
   select.addEventListener('change', () => {

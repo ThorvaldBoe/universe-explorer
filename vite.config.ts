@@ -13,7 +13,6 @@ export default defineConfig({
       input: {
         main: resolve(projectRoot, 'index.html'),
         deepZoomPilot: resolve(projectRoot, 'deep-zoom-pilot.html'),
-        v3CesiumPilot: resolve(projectRoot, 'v3-cesium-pilot.html'),
       },
     },
   },

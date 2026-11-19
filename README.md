@@ -6,9 +6,9 @@ The Solar System, Stars, Milky Way, Local Group, and Cosmic Structures storyboar
 
 The preserved application builds and versioning policy are documented in [App versions](docs/app-versions.md). V1 and V2 remain available from the experience selector; V3 is the maintained build.
 
-The V3 city redesign begins with [the city ascent storyboard](docs/v3-city-storyboard.md), which records the planned irregular urban composition and scale constraints before final image production.
+The V3 city ascent uses CesiumJS and real map imagery in place of generated city zoom artwork. The earlier image-production studies remain documented in [the city ascent storyboard](docs/v3-city-storyboard.md).
 
-The separate [V3 CesiumJS city pilot](v3-cesium-pilot.html) compares a real map-based city zoom with the generated-image handoff. It uses public OpenStreetMap raster tiles, starting at Nordmøre stadion in Kristiansund; it is an exploratory alternative, not part of the live journey.
+V3 now starts its Earth ascent with a CesiumJS map centered on a local road in Kristiansund. It replaces the generated city images for the Earth segment, then continues into the existing Earth, Moon, Solar System, and universe journey. OpenStreetMap raster imagery is used for the city view; detail depends on map coverage.
 
 ## Live preview
 

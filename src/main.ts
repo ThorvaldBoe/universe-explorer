@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { stops } from './data/stops';
 import { sceneRenderers } from './scenes/registry';
 import { DeepZoomArtwork, earthZoomArtIndexByStop, earthZoomFrames } from './scenes/deep-zoom-artwork';
+import { CesiumCityView } from './scenes/cesium-city';
 import type { RendererKind, Stop } from './types';
 import type { SceneUpdateContext } from './scenes/types';
 import { initializePageCounter } from './visit-counter';
@@ -9,7 +10,10 @@ import './style.css';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#universe')!;
 const sceneWrap = document.querySelector<HTMLElement>('.scene-wrap')!;
+const cesiumMapHost = document.querySelector<HTMLElement>('#cesium-city-map')!;
 const artwork = new DeepZoomArtwork(sceneWrap);
+const cesiumMap = new CesiumCityView(cesiumMapHost);
+let cesiumOpacity = 1;
 const title = document.querySelector<HTMLElement>('#scene-title')!;
 const chapter = document.querySelector<HTMLElement>('#chapter')!;
 const copy = document.querySelector<HTMLElement>('#scene-copy')!;
@@ -73,6 +77,8 @@ let starMaterial: THREE.PointsMaterial | undefined;
 const starPositions = new Float32Array(1600 * 3);
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clock = new THREE.Clock();
+const stopUsesCesium = (index: number) => index <= 5;
+const smoothUnit = (value: number) => { const t = THREE.MathUtils.clamp(value, 0, 1); return t * t * (3 - 2 * t); };
 let seed = 8871;
 function random() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
 for (let i = 0; i < starPositions.length; i += 3) {
@@ -116,7 +122,9 @@ function updateInterface(index: number) {
   chapter.textContent = 'CHAPTER ' + stop.chapter.toUpperCase();
   copy.textContent = stop.introduction;
   updateProvenance(stop);
-  scale.textContent = earthZoomArtIndexByStop[index] !== undefined
+  scale.textContent = stopUsesCesium(index)
+    ? stop.scaleLabel
+    : earthZoomArtIndexByStop[index] !== undefined
     ? artwork.labelAt(earthZoomArtIndexByStop[index])
     : stop.scaleLabel;
   previous.disabled = index === 0 || Boolean(journey) || preparingJourney;
@@ -143,7 +151,8 @@ function updateInterface(index: number) {
 
 function updateProvenance(stop: Stop) {
   provenance.hidden = stop.renderer !== 'solar-system' && stop.renderer !== 'stellar' && stop.renderer !== 'galactic' && stop.renderer !== 'local-group' && stop.renderer !== 'cosmological';
-  if (stop.provenance === 'speculative') provenance.textContent = 'Speculative · not directly observed';
+  if (stop.renderer === 'city') provenance.textContent = 'Map data · © OpenStreetMap contributors';
+  else if (stop.provenance === 'speculative') provenance.textContent = 'Speculative · not directly observed';
   else if (stop.renderer === 'galactic') provenance.textContent = 'Reconstructed Milky Way model · illustrative density';
   else if (stop.renderer === 'local-group') provenance.textContent = 'Observed galaxy anchors · reconstructed group view';
   else if (stop.renderer === 'cosmological') provenance.textContent = 'Observed cluster anchors · schematic cosmic-structure reconstruction';
@@ -212,7 +221,9 @@ async function beginJourney(index: number, routeDuration?: number) {
   next.disabled = true;
   progress.querySelectorAll('button').forEach((button) => { button.disabled = true; });
   scale.textContent = 'Preparing the next view…';
-  await artwork.prepareTransition(fromArtIndex, toArtIndex, stops[from].id === 'moon' || stops[index].id === 'moon');
+  if (!(stopUsesCesium(from) && stopUsesCesium(index))) {
+    await artwork.prepareTransition(fromArtIndex, toArtIndex, stops[from].id === 'moon' || stops[index].id === 'moon');
+  }
 
   const fromPosition = cameraWorldPosition.clone();
   const toPosition = positionFor(index);
@@ -228,6 +239,9 @@ async function beginJourney(index: number, routeDuration?: number) {
     || (stops[from].id === 'oort-cloud' && stops[index].id === 'beyond-neptune');
   const duration = reducedMotion ? .01 : routeDuration ? routeDuration / 1000
     : earthToEarth ? 7.5 + Math.min(index, 4) * .35 : oortCloudExpansion ? 13.5 : 9.5;
+  if (stopUsesCesium(from) || stopUsesCesium(index)) {
+    cesiumMap.setWidth(stops[index].visibleWidthMeters, reducedMotion ? 0 : Math.min(duration, 3));
+  }
 
   journey = {
     from, to: index, start: performance.now(), duration: duration * 1000,
@@ -281,6 +295,10 @@ function updateJourney(now: number) {
   if (!journey) return;
   const raw = Math.min(1, (now - journey.start) / journey.duration);
   const eased = journey.earthArc ? raw ** 2.4 : raw * raw * (3 - 2 * raw);
+  if (stopUsesCesium(journey.from) && stopUsesCesium(journey.to)) cesiumOpacity = 1;
+  else if (stopUsesCesium(journey.from)) cesiumOpacity = 1 - smoothUnit((raw - .35) / .35);
+  else if (stopUsesCesium(journey.to)) cesiumOpacity = smoothUnit(raw / .4);
+  else cesiumOpacity = 0;
   const lunarToEarthMoon = stops[journey.from].id === 'moon' && stops[journey.to].id === 'earth-moon';
   const milkyWayToLocalGroup = stops[journey.from].renderer === 'galactic' && stops[journey.to].renderer === 'local-group';
   const deepSpaceReturnToEarth = ['galactic', 'local-group', 'cosmological'].includes(stops[journey.from].renderer)
@@ -361,7 +379,7 @@ function updateJourney(now: number) {
     scale.textContent = eased < .5
       ? formatDistance(cameraWorldPosition.length(), 'Earth center')
       : formatDistance(cameraWorldPosition.distanceTo(journey.toTarget), 'Moon center');
-  } else if (lunarToEarthMoon || ['solar-system', 'stellar', 'galactic', 'local-group', 'cosmological'].includes(stops[journey.from].renderer) || ['solar-system', 'stellar', 'galactic', 'local-group', 'cosmological'].includes(stops[journey.to].renderer)) {
+  } else if ((stopUsesCesium(journey.from) && stopUsesCesium(journey.to)) || lunarToEarthMoon || ['solar-system', 'stellar', 'galactic', 'local-group', 'cosmological'].includes(stops[journey.from].renderer) || ['solar-system', 'stellar', 'galactic', 'local-group', 'cosmological'].includes(stops[journey.to].renderer)) {
     const fromWidth = stops[journey.from].visibleWidthMeters / 1000;
     const toWidth = stops[journey.to].visibleWidthMeters / 1000;
     const width = Math.exp(Math.log(fromWidth) + (Math.log(toWidth) - Math.log(fromWidth)) * eased);
@@ -379,6 +397,16 @@ function updateJourney(now: number) {
 }
 
 function init() {
+  void cesiumMap.initialize().then(() => {
+    const currentView = journey?.to ?? active;
+    if (stopUsesCesium(currentView)) {
+      cesiumMap.setWidth(stops[currentView].visibleWidthMeters);
+      cesiumMap.setOpacity(cesiumOpacity);
+    }
+    if (cesiumMapHost.dataset.mapStatus === 'error') cesiumOpacity = 0;
+  }).catch(() => {
+    cesiumOpacity = 0;
+  });
   try {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, logarithmicDepthBuffer: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
@@ -421,11 +449,17 @@ function render() {
   frame = requestAnimationFrame(render);
   const elapsed = clock.getElapsedTime();
   updateJourney(performance.now());
+  const mapEnabled = cesiumMapHost.dataset.mapStatus !== 'error';
+  cesiumMap.setOpacity(mapEnabled ? (journey ? cesiumOpacity : stopUsesCesium(active) ? 1 : 0) : 0);
   if (!journey) {
     if (stops[active].id === 'moon') artwork.showLunarArrival(earthZoomArtIndexByStop.at(-1)!, 1);
     else if (earthZoomArtIndexByStop[active] !== undefined) artwork.showEarthFrame(earthZoomArtIndexByStop[active]);
     else artwork.showSceneOnly();
+    artwork.setOpacity(stopUsesCesium(active) && mapEnabled ? 0 : 1);
+  } else {
+    artwork.setOpacity(mapEnabled && (stopUsesCesium(journey.from) || stopUsesCesium(journey.to)) ? 1 - cesiumOpacity : 1);
   }
+  if (mapEnabled && cesiumOpacity >= .99) return;
   const distance = Math.max(EARTH_RADIUS_KM, cameraWorldPosition.length());
   if (starMaterial) starMaterial.opacity = .72 * THREE.MathUtils.smoothstep(distance, EARTH_RADIUS_KM * 1.5, EARTH_RADIUS_KM * 12);
   const stars = scene.children.find((object) => object instanceof THREE.Points) as THREE.Points | undefined;
@@ -452,7 +486,7 @@ function render() {
     group.position.copy(group.userData.worldPosition as THREE.Vector3).sub(cameraWorldPosition);
     sceneRenderers[stops[index].renderer]?.update?.(group, elapsed, context);
   }
-  renderer.render(scene, camera);
+  if (cesiumOpacity < .99) renderer.render(scene, camera);
 }
 
 previous.addEventListener('click', () => navigate(active - 1));
