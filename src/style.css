@@ -133,16 +133,13 @@ h1 { margin: 1rem 0 .7rem; font-size: clamp(2.3rem, 3.4vw, 3rem); line-height: .
 .stellar-label-sun { color: #ffe5ae; border-color: rgba(255, 215, 138, .6); }
 .stellar-label-region { color: #c6d7ff; }
 
-.cesium-link { color: #91a8cd; font-size: .56rem; font-weight: 700; letter-spacing: .12em; text-decoration: none; white-space: nowrap; }
-.cesium-link:hover { color: #d6edff; }
-.cesium-viewer { isolation: isolate; }
-.cesium-viewer .cesium-widget,
-.cesium-viewer .cesium-widget canvas { width: 100% !important; height: 100% !important; }
-.cesium-viewer .cesium-widget-credits { color: #111 !important; font-size: 10px !important; }
-.cesium-viewer .cesium-viewer-bottom { left: auto; right: 4px; bottom: 3px; }
-.cesium-viewer .cesium-widget-credits a { color: #111 !important; }
-@media(max-width:500px) {
-  .topbar-actions { gap: .4rem; }
-  .cesium-link { font-size: 0; }
-  .cesium-link::before { content: 'MAP'; font-size: .52rem; }
-}
+.cesium-city-map { position:absolute; z-index:1; inset:0; opacity:0; visibility:hidden; overflow:hidden; background:#101824; transition:opacity .18s ease; }
+.cesium-city-map.is-visible { visibility:visible; }
+.cesium-city-map .cesium-widget,
+.cesium-city-map .cesium-widget canvas { width:100% !important; height:100% !important; }
+.cesium-city-map .cesium-viewer-bottom { left:auto; right:4px; bottom:3px; }
+.cesium-city-map::after { content:'Loading map imagery…'; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); color:#d6e3f4; font-size:.78rem; letter-spacing:.04em; text-shadow:0 1px 5px #000; pointer-events:none; }
+.cesium-city-map[data-map-status='loaded']::after { content:none; }
+.cesium-city-map[data-map-status='error']::after { content:'Map unavailable · showing fallback view'; }
+.cesium-city-map .cesium-widget-credits { color:#eef3fb !important; font-size:10px !important; text-shadow:0 1px 4px #000; }
+.cesium-city-map .cesium-widget-credits a { color:#eef3fb !important; }

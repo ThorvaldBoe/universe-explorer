@@ -184,10 +184,10 @@ function earthStop(
 
 export const stops: Stop[] = [
   {
-    ...earthStop('street', '01 · Earth', 'On the street', 'A single painted lane marker fills the frame. The ascent starts straight up from the asphalt.', .0017, 1, 'Road surface · 1 m across'),
+    ...earthStop('street', '01 · Earth', 'On the street', 'Begin on a local street in Kristiansund, then pull back to reveal the surrounding neighborhood.', .02, 27, 'View width · 27 m'),
     cameraFovDegrees: 70,
   },
-  earthStop('neighborhood', '01 · Earth', 'Above the avenue', 'The painted line recedes as nearby road detail and the first blocks enter the frame.', .35, 27, 'View width · 27 m'),
+  earthStop('neighborhood', '01 · Earth', 'Above the avenue', 'The painted line recedes as nearby road detail and the first blocks enter the frame.', .05, 81, 'View width · 81 m'),
   earthStop('city', '01 · Earth', 'The city below', 'Roads, blocks, and the wider city appear through successive threefold zoom levels.', 8, 729, 'View width · 729 m'),
   earthStop('atmosphere', '02 · Earth and Moon', 'Above the atmosphere', 'The city gives way to regional detail, then the blue edge of the atmosphere.', 160, 19_683, 'View width · 19.7 km', 'planetary'),
   earthStop('continents', '02 · Earth and Moon', 'A continental view', 'Landforms expand across the view; the curved edge of Earth begins to emerge.', 2200, 531_441, 'View width · 531 km', 'planetary'),
